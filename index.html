@@ -506,8 +506,8 @@
         // Sprite system
         const spriteSheets = {};
         let spritesLoaded = false;
-        const SPRITE_WIDTH = 68;  // Actual sprite width from spritesheet (481/7 ≈ 68.7)
-        const SPRITE_HEIGHT = 68; // Actual sprite height (keeping square)
+        const SPRITE_WIDTH = 481 / 7;  // Exact: 68.714285... (don't round!)
+        const SPRITE_HEIGHT = 481 / 7; // Keep square, same as width
         const SPRITES_PER_ROW = 7;
         
         // Animation state
