@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Snow Shovel Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #1a1a2e;
+            color: white;
+            overflow: hidden;
+            touch-action: none;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        #gameContainer {
+            width: 100vw;
+            height: 100dvh; /* Dynamic viewport height for mobile */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #topBar {
+            background: #0f3460;
+            padding: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 3px solid #16213e;
+            flex-shrink: 0;
+        }
+
+        #timer {
+            font-size: 14px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        #topRightButtons {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .top-btn {
+            background: #16213e;
+            border: 2px solid #fff;
+            border-radius: 5px;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 5px 10px;
+            cursor: pointer;
+            min-width: 50px;
+        }
+
+        .top-btn:active {
+            background: #533483;
+        }
+
+        .top-btn.active {
+            background: #4CAF50;
+        }
+
+        #gameCanvas {
+            flex: 1;
+            background: #e8f5e9;
+            position: relative;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        #controls {
+            background: #0f3460;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border-top: 3px solid #16213e;
+            flex-shrink: 0;
+        }
+
+        #controlsTop {
+            display: flex;
+            justify-content: space-around;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        #controlsBottom {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            position: relative;
+            height: 95px;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .stat-label {
+            font-size: 8px;
+            font-weight: bold;
+        }
+
+        .meter {
+            width: 100%;
+            max-width: 60px;
+            height: 8px;
+            background: #16213e;
+            border: 1px solid #fff;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .meter-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .energy-fill { background: #4CAF50; }
+        .hunger-fill { background: #FF9800; }
+        .frost-fill { background: #2196F3; }
+
+        #money {
+            font-size: 12px;
+            font-weight: bold;
+            color: #4CAF50;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        #dpad {
+            width: 90px;
+            height: 90px;
+            position: relative;
+            touch-action: none;
+            background: #16213e;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #joystick {
+            width: 32px;
+            height: 32px;
+            background: #533483;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            position: absolute;
+            transition: all 0.1s;
+            pointer-events: none;
+        }
+
+        .dpad-btn {
+            display: none;
+        }
+
+        #actionBtn {
+            width: 80px;
+            height: 80px;
+            background: #e94560;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 5px;
+            position: absolute;
+            right: 15px;
+        }
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8px;
+        }
+
+        #actionBtn:active {
+            background: #c13654;
+        }
+
+        #actionBtn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        #equipmentInfo {
+            position: absolute;
+            left: 60px;
+            font-size: 9px;
+            color: #fff;
+            text-align: left;
+            line-height: 1.3;
+            max-width: 100px;
+        }
+
+        #frostMeter {
+            position: absolute;
+            left: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 85px;
+        }
+
+        .vertical-meter {
+            width: 12px;
+            height: 85px;
+            background: #16213e;
+            border: 2px solid #fff;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+
+        .vertical-meter .meter-fill {
+            width: 100%;
+            transition: height 0.3s;
+        }
+
+        #equipmentInfo div {
+            margin-bottom: 2px;
+        }
+
+        .equipment-label {
+            color: #FFD700;
+            font-weight: bold;
+        }
+
+        #introScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 52, 96, 0.98);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #introScreen.hidden {
+            display: none;
+        }
+
+        #introText {
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 30px;
+            line-height: 1.5;
+            max-width: 90%;
+        }
+
+        #startButton {
+            background: #4CAF50;
+            color: white;
+            border: 3px solid #fff;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        #startButton:active {
+            background: #45a049;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #shopModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #shopContent {
+            background: #0f3460;
+            border: 5px solid #fff;
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 90%;
+            max-height: 85%;
+            overflow-y: auto;
+        }
+
+        .shop-header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .shop-section {
+            margin-bottom: 20px;
+        }
+
+        .shop-section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #FFD700;
+        }
+
+        .shop-item {
+            background: #16213e;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .shop-item-info {
+            flex: 1;
+        }
+
+        .shop-item-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .shop-item-desc {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .shop-item-price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-right: 10px;
+        }
+
+        .shop-buy-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .shop-buy-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .shop-close-btn {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .equipped {
+            color: #FFD700;
+            font-weight: bold;
+        }
+
+        #restOverlay {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(15, 52, 96, 0.95);
+            border: 5px solid #fff;
+            border-radius: 20px;
+            padding: 30px 50px;
+            z-index: 500;
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="introScreen">
+        <div id="introText">
+            Clear snow from driveways to earn money and upgrade your equipment. Your ultimate goal is to clear the massive snow bank at the top of the street - only a small plow can tackle it!
+        </div>
+        <button id="startButton">START GAME</button>
+    </div>
+
+    <div id="gameContainer">
+        <div id="topBar">
+            <div id="timer">Next snow: 2:00</div>
+            <div id="topRightButtons">
+                <button class="top-btn" id="pauseBtn">PAUSE</button>
+                <button class="top-btn" id="ffwBtn">1x</button>
+            </div>
+        </div>
+        
+        <div id="gameCanvas">
+            <canvas id="canvas"></canvas>
+        </div>
+        
+        <div id="controls">
+            <div id="controlsTop">
+                <div class="stat">
+                    <div class="stat-label">ENERGY</div>
+                    <div class="meter">
+                        <div class="meter-fill energy-fill" id="energyBar" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">HUNGER</div>
+                    <div class="meter">
+                        <div class="meter-fill hunger-fill" id="hungerBar" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div id="money">$4000</div>
+            </div>
+            <div id="controlsBottom">
+                <div id="frostMeter">
+                    <div class="stat-label" style="writing-mode: vertical-rl; text-orientation: mixed; font-size: 10px;">FROST</div>
+                    <div class="vertical-meter">
+                        <div class="meter-fill frost-fill" id="frostBar" style="height: 0%"></div>
+                    </div>
+                </div>
+                <div id="equipmentInfo">
+                    <div><span class="equipment-label">Tool:</span> <span id="equipTool">Basic Shovel</span></div>
+                    <div><span class="equipment-label">Hat:</span> <span id="equipHat">No</span></div>
+                    <div><span class="equipment-label">Gloves:</span> <span id="equipGloves">No</span></div>
+                    <div><span class="equipment-label">Coat:</span> <span id="equipCoat">No</span></div>
+                </div>
+                <div id="dpad">
+                    <div id="joystick"></div>
+                </div>
+                <button id="actionBtn">---</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="restOverlay">RESTING...</div>
+
+    <div id="shopModal">
+        <div id="shopContent">
+            <div class="shop-header" id="shopTitle">Shop</div>
+            <div id="shopItems"></div>
+            <button class="shop-close-btn" onclick="closeShop()">CLOSE</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let moveInterval = null;
+        let currentDirection = { dx: 0, dy: 0 };
+        
+        // Sprite system
+        const spriteSheets = {};
+        let spritesLoaded = false;
+        const SPRITE_WIDTH = 16;
+        const SPRITE_HEIGHT = 32;
+        const SPRITES_PER_ROW = 7;
+        
+        // Animation state
+        const animationState = {
+            frame: 0,
+            frameCounter: 0,
+            framesPerUpdate: 8, // Change sprite every 8 game frames
+            currentAnimation: 'idle', // 'idle', 'walking', 'shoveling', 'sitting', 'passedout'
+            direction: 'down' // 'up', 'down', 'left', 'right'
+        };
+        
+        let gameState = {
+            paused: true,
+            inShop: false,
+            timeSpeed: 1,
+            camera: {
+                x: 0,
+                y: 0
+            },
+            mapSize: {
+                width: 1600,  // Even wider for proper side street spacing
+                height: 3000  // Taller for bigger blocks
+            },
+            player: {
+                x: 1010,  // Aligned with home (rightZone)
+                y: 2720,  // On 1st street, at end of home's driveway
+                speed: 1.6,
+                energy: 100,
+                hunger: 100,
+                frost: 0,  // Changed from cold - 0% = no frost, 100% = fully frosted
+                money: 4000,
+                shovel: 'basic',
+                clothing: { hat: false, gloves: false, coat: false },
+                hasPlowKeys: false,
+                vehicle: 'walk'
+            },
+            currentAction: null,
+            buildings: [],
+            snowTimer: 120, // 2 minutes in seconds
+            gameTime: 0
+        };
+
+        // Building types and data
+        const buildingTypes = {
+            home: { color: '#8B4513', label: 'HOME', width: 180, height: 200 },
+            house: { color: '#D2691E', label: 'HOUSE', width: 160, height: 180 },
+            bighouse: { color: '#CD853F', label: 'BIG HOUSE', width: 180, height: 200 },
+            megahouse: { color: '#DEB887', label: 'MEGA HOUSE', width: 200, height: 220 },
+            hardware: { color: '#696969', label: 'HARDWARE', width: 180, height: 180 },
+            hotdog: { color: '#FF6347', label: 'HOT DOGS', width: 140, height: 140 },
+            snowbank: { color: '#E0E0E0', label: 'SNOW BANK', width: 150, height: 80 },
+            bench: { color: '#8B4513', label: 'BENCH', width: 60, height: 40 },
+            campfire: { color: '#FF4500', label: 'CAMPFIRE', width: 60, height: 60 },
+            snowplow: { color: '#FFD700', label: 'SNOW PLOW', width: 100, height: 140 }
+        };
+
+        const shovelTypes = {
+            basic: { name: 'Basic Shovel', speed: 0.5, energyUse: 1, price: 0 },
+            large: { name: 'Large Shovel', speed: 1, energyUse: 0.8, price: 150 },
+            blower: { name: 'Snow Blower', speed: 2.5, energyUse: 0.5, price: 500 }
+        };
+        
+        const specialItems = {
+            plowKeys: { name: 'Snow Plow Keys', desc: 'Access to the snow plow vehicle', price: 2000 }
+        };
+
+        const foodItems = {
+            hotdog: { name: 'Hot Dog', hunger: 75, frost: 0, energy: 0, price: 10 },
+            coffee: { name: 'Coffee', hunger: 0, frost: -25, energy: 25, price: 5 }  // Reduces frost
+        };
+
+        const clothingItems = {
+            hat: { name: 'Winter Hat', frostResist: 0.2, price: 50 },
+            gloves: { name: 'Gloves', frostResist: 0.2, price: 50 },
+            coat: { name: 'Winter Coat', frostResist: 0.3, price: 150 }
+        };
+
+        // Load all character spritesheets
+        function loadSprites() {
+            const spriteConfigs = [
+                { key: 'normal', path: '/mnt/user-data/uploads/character-spritesheet-Normal.png' },
+                { key: 'gloves', path: '/mnt/user-data/uploads/character-spritesheet-Gloves.png' },
+                { key: 'hat', path: '/mnt/user-data/uploads/character-spritesheet-hat.png' },
+                { key: 'jacket', path: '/mnt/user-data/uploads/character-spritesheet-jacket.png' },
+                { key: 'gloves-hat', path: '/mnt/user-data/uploads/character-spritesheet-gloves-hat.png' },
+                { key: 'gloves-jacket', path: '/mnt/user-data/uploads/character-spritesheet-gloves-jacket.png' },
+                { key: 'jacket-hat', path: '/mnt/user-data/uploads/character-spritesheet-jaket-hat.png' },
+                { key: 'gloves-jacket-hat', path: '/mnt/user-data/uploads/character-spritesheet-gloves-jacket-hat.png' }
+            ];
+            
+            let loadedCount = 0;
+            spriteConfigs.forEach(config => {
+                const img = new Image();
+                img.onload = () => {
+                    spriteSheets[config.key] = img;
+                    loadedCount++;
+                    if (loadedCount === spriteConfigs.length) {
+                        spritesLoaded = true;
+                        console.log('All sprites loaded!');
+                    }
+                };
+                img.onerror = () => {
+                    console.error('Failed to load sprite:', config.path);
+                };
+                img.src = config.path;
+            });
+        }
+        
+        // Get current spritesheet based on equipped clothing
+        function getCurrentSpriteSheet() {
+            const { hat, gloves, coat } = gameState.player.clothing;
+            
+            if (gloves && coat && hat) return spriteSheets['gloves-jacket-hat'];
+            if (gloves && coat) return spriteSheets['gloves-jacket'];
+            if (gloves && hat) return spriteSheets['gloves-hat'];
+            if (coat && hat) return spriteSheets['jacket-hat'];
+            if (gloves) return spriteSheets['gloves'];
+            if (hat) return spriteSheets['hat'];
+            if (coat) return spriteSheets['jacket'];
+            return spriteSheets['normal'];
+        }
+        
+        // Get sprite coordinates from spritesheet
+        function getSpriteCoords(row, col) {
+            return {
+                x: col * SPRITE_WIDTH,
+                y: row * SPRITE_HEIGHT,
+                width: SPRITE_WIDTH,
+                height: SPRITE_HEIGHT
+            };
+        }
+
+        function initBuildings() {
+            const mainStreet = 800; // Center X
+            const tileWidth = 160; // Base tile width for spacing
+            
+            // Cross street Y positions (bottom to top: 1st, 2nd, 3rd, 4th, 5th, 6th)
+            const street1Y = 2700;
+            const street2Y = 2200;
+            const street3Y = 1700;
+            const street4Y = 1200;
+            const street5Y = 700;
+            const street6Y = 200;
+            
+            // Left and right zones (1 tile away from main street)
+            const leftZone = mainStreet - 50 - tileWidth; // 1 tile from main street left edge
+            const rightZone = mainStreet + 50 + tileWidth; // 1 tile from main street right edge
+            
+            gameState.buildings = [
+                // Snow bank at very top - IN main street above 6th street
+                { type: 'snowbank', x: mainStreet - 75, y: 50, snowAmount: 1000, maxSnow: 1000, payment: 0 },
+                
+                // 5TH STREET - 2 Fancy houses (well spaced)
+                { type: 'megahouse', x: leftZone - 200, y: 700 - 220, snowAmount: 300, maxSnow: 300, payment: 100, requiredTool: 'blower' },
+                { type: 'megahouse', x: rightZone, y: 700 - 220, snowAmount: 300, maxSnow: 300, payment: 100, requiredTool: 'blower' },
+                
+                // 4TH STREET
+                // Left: bench (bottom at street top) + large house (3 tiles apart)
+                { type: 'bench', x: leftZone - 400, y: 1200 - 40, snowAmount: 0, maxSnow: 0 }, // bench height is 40
+                { type: 'bighouse', x: leftZone - 60, y: 1200 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' },
+                // Right: hardware + plow (next to each other, bottoms at street top) + large house (3 tiles away)
+                { type: 'hardware', x: rightZone, y: 1200 - 180, snowAmount: 0, maxSnow: 0 }, // hardware height is 180
+                { type: 'snowplow', x: rightZone + 190, y: 1200 - 140, snowAmount: 0, maxSnow: 0 }, // plow height is 140
+                { type: 'bighouse', x: rightZone + 490, y: 1200 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' },
+                
+                // 3RD STREET
+                // Left: 1 large house
+                { type: 'bighouse', x: leftZone - 60, y: 1700 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' },
+                // Right: hot dog + bench + campfire (all next to each other, bottoms at street top)
+                { type: 'hotdog', x: rightZone, y: 1700 - 140, snowAmount: 0, maxSnow: 0 }, // hotdog height is 140
+                { type: 'bench', x: rightZone + 150, y: 1700 - 40, snowAmount: 0, maxSnow: 0 }, // bench height is 40
+                { type: 'campfire', x: rightZone + 220, y: 1700 - 60, snowAmount: 0, maxSnow: 0 }, // campfire height is 60
+                
+                // 2ND STREET - 4 normal houses (2 left, 2 right, all spaced 3 tiles apart)
+                { type: 'house', x: leftZone - 400, y: 2200 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                { type: 'house', x: leftZone, y: 2200 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                { type: 'house', x: rightZone, y: 2200 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                { type: 'house', x: rightZone + 400, y: 2200 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                
+                // 1ST STREET
+                // Left: 2 normal houses (3 tiles apart)
+                { type: 'house', x: leftZone - 400, y: 2700 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                { type: 'house', x: leftZone, y: 2700 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                // Right: MY HOME + 1 normal house (3 tiles apart)
+                { type: 'home', x: rightZone, y: 2700 - 200, snowAmount: 0, maxSnow: 0 },
+                { type: 'house', x: rightZone + 400, y: 2700 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }
+            ];
+        }
+
+        function resizeCanvas() {
+            const container = document.getElementById('gameCanvas');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+
+        function drawBuilding(building) {
+            const bType = buildingTypes[building.type];
+            
+            // Items that sit directly on street (no driveways): benches, campfire, shops, snowplow
+            if (building.type === 'bench' || building.type === 'campfire' || 
+                building.type === 'hardware' || building.type === 'hotdog' || building.type === 'snowplow') {
+                ctx.fillStyle = bType.color;
+                ctx.fillRect(building.x, building.y, bType.width, bType.height);
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(building.x, building.y, bType.width, bType.height);
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = building.type === 'snowplow' ? 'bold 14px Arial' : 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(bType.label, building.x + bType.width/2, building.y + bType.height/2 + 4);
+                return;
+            }
+            
+            // Snow bank sits in the street
+            if (building.type === 'snowbank') {
+                ctx.fillStyle = building.snowAmount > 0 ? '#ffffff' : '#808080';
+                ctx.fillRect(building.x, building.y, bType.width, bType.height);
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(building.x, building.y, bType.width, bType.height);
+                
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(bType.label, building.x + bType.width/2, building.y + bType.height/2 + 5);
+                
+                if (building.clearing) {
+                    const progress = 1 - (building.snowAmount / building.maxSnow);
+                    ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
+                    ctx.fillRect(building.x, building.y - 15, bType.width * progress, 8);
+                }
+                return;
+            }
+            
+            // Houses have yards and driveways that end at the TOP of the cross street
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(building.x - 20, building.y - 20, bType.width + 40, bType.height + 40);
+            
+            // Draw driveway going DOWN - should end exactly at street top edge
+            const drivewayColor = building.snowAmount > 0 ? '#ffffff' : '#808080';
+            ctx.fillStyle = drivewayColor;
+            
+            const drivewayX = building.x + bType.width/2 - 40;
+            const drivewayY = building.y + bType.height;
+            const drivewayWidth = 80;
+            // Calculate driveway height to reach street without crossing it
+            const drivewayHeight = 20; // Just enough gap to reach street
+            
+            ctx.fillRect(drivewayX, drivewayY, drivewayWidth, drivewayHeight);
+            
+            // Draw building
+            ctx.fillStyle = bType.color;
+            ctx.fillRect(building.x, building.y, bType.width, bType.height);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(building.x, building.y, bType.width, bType.height);
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(bType.label, building.x + bType.width/2, building.y + bType.height/2 + 5);
+            
+            if (building.clearing) {
+                const progress = 1 - (building.snowAmount / building.maxSnow);
+                ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
+                ctx.fillRect(building.x, building.y - 15, bType.width * progress, 8);
+            }
+        }
+
+        function drawPlayer() {
+            if (!spritesLoaded) {
+                // Fallback to blue circle if sprites not loaded
+                ctx.fillStyle = '#0000FF';
+                ctx.beginPath();
+                ctx.arc(gameState.player.x, gameState.player.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                return;
+            }
+            
+            const spriteSheet = getCurrentSpriteSheet();
+            if (!spriteSheet) return;
+            
+            // Determine which row to use based on animation state
+            let row = 22; // Default to idle standing (row 23, 0-indexed = 22)
+            let numFrames = 7;
+            
+            if (animationState.currentAnimation === 'passedout') {
+                row = 20; // Row 21
+                animationState.frame = 0; // Single frame
+                numFrames = 1;
+            } else if (animationState.currentAnimation === 'sitting') {
+                row = 32; // Row 33
+                animationState.frame = 2; // Third image only
+                numFrames = 1;
+            } else if (animationState.currentAnimation === 'shoveling') {
+                // Rows 6-7 for shoveling (0-indexed: 5-6)
+                row = animationState.direction === 'down' ? 5 : 6;
+                numFrames = 7;
+            } else if (animationState.currentAnimation === 'walking') {
+                // Rows 9-12 for walking (0-indexed: 8-11)
+                const directionRows = { down: 8, up: 9, left: 10, right: 11 };
+                row = directionRows[animationState.direction] || 8;
+                numFrames = 7;
+            } else if (animationState.currentAnimation === 'idle') {
+                // Rows 23-26 for idle (0-indexed: 22-25)
+                const directionRows = { down: 22, up: 23, left: 24, right: 25 };
+                row = directionRows[animationState.direction] || 22;
+                numFrames = 7;
+            }
+            
+            // Update animation frame
+            animationState.frameCounter++;
+            if (animationState.frameCounter >= animationState.framesPerUpdate) {
+                animationState.frameCounter = 0;
+                if (numFrames > 1) {
+                    animationState.frame = (animationState.frame + 1) % numFrames;
+                }
+            }
+            
+            const sprite = getSpriteCoords(row, animationState.frame);
+            
+            // Draw sprite centered on player position
+            ctx.drawImage(
+                spriteSheet,
+                sprite.x, sprite.y, sprite.width, sprite.height,
+                gameState.player.x - SPRITE_WIDTH / 2, 
+                gameState.player.y - SPRITE_HEIGHT / 2,
+                SPRITE_WIDTH, SPRITE_HEIGHT
+            );
+        }
+
+        function updateCamera() {
+            // Center camera on player
+            gameState.camera.x = gameState.player.x - canvas.width / 2;
+            gameState.camera.y = gameState.player.y - canvas.height / 2;
+            
+            // Clamp camera to map boundaries
+            gameState.camera.x = Math.max(0, Math.min(gameState.camera.x, gameState.mapSize.width - canvas.width));
+            gameState.camera.y = Math.max(0, Math.min(gameState.camera.y, gameState.mapSize.height - canvas.height));
+        }
+
+        function isOnWalkableSurface(x, y) {
+            const mainStreet = 800;
+            const streetWidth = 100;
+            const streetLeft = mainStreet - streetWidth/2;
+            const streetRight = mainStreet + streetWidth/2;
+            
+            // Check if on main street (vertical road)
+            if (x >= streetLeft && x <= streetRight) {
+                return true;
+            }
+            
+            // Check if on any cross street (1st through 6th)
+            const crossStreets = [2700, 2200, 1700, 1200, 700, 200];
+            const crossStreetHeight = 100;
+            
+            for (let streetY of crossStreets) {
+                if (y >= streetY && y <= streetY + crossStreetHeight) {
+                    return true;
+                }
+            }
+            
+            // Check if on any cleared driveway
+            for (let building of gameState.buildings) {
+                if (building.type === 'bench' || building.type === 'campfire' || building.type === 'snowbank') continue;
+                if (building.type === 'hardware' || building.type === 'hotdog' || building.type === 'snowplow') continue;
+                if (building.snowAmount > 0) continue;
+                
+                const bType = buildingTypes[building.type];
+                const drivewayX = building.x + bType.width/2 - 40;
+                const drivewayY = building.y + bType.height;
+                const drivewayWidth = 80;
+                const drivewayHeight = 20;
+                
+                if (x >= drivewayX && x <= drivewayX + drivewayWidth && 
+                    y >= drivewayY && y <= drivewayY + drivewayHeight) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Save context and apply camera transform
+            ctx.save();
+            ctx.translate(-gameState.camera.x, -gameState.camera.y);
+            
+            // Draw background (snow/grass)
+            ctx.fillStyle = '#e8f5e9';
+            ctx.fillRect(0, 0, gameState.mapSize.width, gameState.mapSize.height);
+            
+            // Draw main vertical street (centered)
+            const mainStreet = 800;  // Center X of map
+            const streetWidth = 100;
+            const streetLeft = mainStreet - streetWidth/2;
+            const streetRight = mainStreet + streetWidth/2;
+            
+            ctx.fillStyle = '#555';
+            ctx.fillRect(streetLeft, 0, streetWidth, gameState.mapSize.height);
+            
+            // Draw cross streets (horizontal) - numbered from bottom to top
+            // 1st Street (bottom), 2nd, 3rd, 4th, 5th, 6th (top of playable area)
+            const crossStreets = [2700, 2200, 1700, 1200, 700, 200];  // Y positions from bottom to top
+            const crossStreetHeight = 100;
+            crossStreets.forEach(y => {
+                ctx.fillRect(0, y, gameState.mapSize.width, crossStreetHeight);
+            });
+            
+            // Draw yellow dotted center line on main street
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([20, 20]);
+            ctx.beginPath();
+            ctx.moveTo(mainStreet, 0);
+            ctx.lineTo(mainStreet, gameState.mapSize.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Draw buildings
+            gameState.buildings.forEach(drawBuilding);
+            
+            // Draw player
+            drawPlayer();
+            
+            // Restore context
+            ctx.restore();
+            
+            // Draw hunger indicator if needed (in screen space, not world space)
+            if (gameState.player.hunger <= 0) {
+                const screenX = canvas.width / 2;
+                const screenY = canvas.height / 2 - 20;
+                ctx.fillStyle = '#FF0000';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText("I'm so hungry!", screenX, screenY);
+            }
+        }
+
+        function updateMeters() {
+            document.getElementById('energyBar').style.width = gameState.player.energy + '%';
+            document.getElementById('hungerBar').style.width = gameState.player.hunger + '%';
+            document.getElementById('frostBar').style.height = gameState.player.frost + '%';
+            document.getElementById('money').textContent = '$' + gameState.player.money;
+            updateEquipmentDisplay();
+        }
+
+        function updateEquipmentDisplay() {
+            document.getElementById('equipTool').textContent = shovelTypes[gameState.player.shovel].name;
+            document.getElementById('equipHat').textContent = gameState.player.clothing.hat ? 'Yes' : 'No';
+            document.getElementById('equipGloves').textContent = gameState.player.clothing.gloves ? 'Yes' : 'No';
+            document.getElementById('equipCoat').textContent = gameState.player.clothing.coat ? 'Yes' : 'No';
+        }
+
+        function updateTimer() {
+            const minutes = Math.floor(gameState.snowTimer / 60);
+            const seconds = gameState.snowTimer % 60;
+            document.getElementById('timer').textContent = 
+                `Next snow: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function checkNearBuilding() {
+            for (let building of gameState.buildings) {
+                const bType = buildingTypes[building.type];
+                
+                // Simple distance check for items on streets: benches, campfire, snow bank, shops, snowplow
+                if (building.type === 'bench' || building.type === 'campfire' || building.type === 'snowbank' ||
+                    building.type === 'hardware' || building.type === 'hotdog' || building.type === 'snowplow') {
+                    const distance = Math.sqrt(
+                        Math.pow(gameState.player.x - (building.x + bType.width/2), 2) +
+                        Math.pow(gameState.player.y - (building.y + bType.height/2), 2)
+                    );
+                    if (distance < 120) {
+                        return building;
+                    }
+                    continue;
+                }
+                
+                // For houses/home, check if player is at END of short driveway
+                const drivewayX = building.x + bType.width/2;
+                const drivewayEndY = building.y + bType.height + 20;
+                
+                if (Math.abs(gameState.player.x - drivewayX) < 50 && 
+                    Math.abs(gameState.player.y - drivewayEndY) < 30) {
+                    return building;
+                }
+            }
+            return null;
+        }
+
+        function updateActionButton() {
+            const btn = document.getElementById('actionBtn');
+            const nearBuilding = checkNearBuilding();
+            
+            if (gameState.currentAction === 'clearing') {
+                btn.textContent = 'CANCEL';
+                btn.disabled = false;
+            } else if (gameState.currentAction === 'resting') {
+                btn.textContent = 'CANCEL';
+                btn.disabled = false;
+            } else if (nearBuilding) {
+                if (nearBuilding.type === 'home' || nearBuilding.type === 'bench' || nearBuilding.type === 'campfire') {
+                    btn.textContent = 'REST';
+                    btn.disabled = false;
+                } else if (nearBuilding.type === 'hardware' || nearBuilding.type === 'hotdog') {
+                    btn.textContent = 'ENTER';
+                    btn.disabled = false;
+                } else if (nearBuilding.type === 'snowplow') {
+                    if (gameState.player.hasPlowKeys) {
+                        btn.textContent = 'ENTER';
+                        btn.disabled = false;
+                    } else {
+                        btn.textContent = 'NEED KEYS';
+                        btn.disabled = true;
+                    }
+                } else if ((nearBuilding.type === 'house' || nearBuilding.type === 'bighouse' || nearBuilding.type === 'megahouse' || nearBuilding.type === 'snowbank') && nearBuilding.snowAmount > 0) {
+                    // Check if player is too hungry
+                    if (gameState.player.hunger <= 0) {
+                        btn.textContent = 'TOO HUNGRY';
+                        btn.disabled = true;
+                    }
+                    // Check if player has required tool
+                    else if (nearBuilding.requiredTool && !canClearBuilding(nearBuilding)) {
+                        btn.textContent = 'NEED UPGRADE';
+                        btn.disabled = true;
+                    } else {
+                        btn.textContent = 'CLEAR SNOW';
+                        btn.disabled = false;
+                    }
+                } else {
+                    btn.textContent = '---';
+                    btn.disabled = true;
+                }
+            } else {
+                btn.textContent = '---';
+                btn.disabled = true;
+            }
+        }
+
+        function canClearBuilding(building) {
+            // Snow bank can only be cleared by the plow vehicle (not by player with shovel)
+            if (building.type === 'snowbank') return false;
+            
+            if (!building.requiredTool) return true;
+            
+            const toolOrder = ['basic', 'large', 'blower'];
+            const requiredIndex = toolOrder.indexOf(building.requiredTool);
+            const playerIndex = toolOrder.indexOf(gameState.player.shovel);
+            
+            return playerIndex >= requiredIndex;
+        }
+
+        function handleAction() {
+            if (gameState.currentAction === 'clearing') {
+                // Cancel clearing
+                const building = gameState.buildings.find(b => b.clearing);
+                if (building) {
+                    building.clearing = false;
+                }
+                gameState.currentAction = null;
+                updateActionButton();
+                return;
+            }
+            
+            if (gameState.currentAction === 'resting') {
+                // Cancel resting
+                gameState.currentAction = null;
+                document.getElementById('restOverlay').style.display = 'none';
+                updateActionButton();
+                return;
+            }
+            
+            const nearBuilding = checkNearBuilding();
+            if (!nearBuilding) return;
+            
+            if (nearBuilding.type === 'home') {
+                gameState.currentAction = 'resting';
+                document.getElementById('restOverlay').style.display = 'block';
+                
+                const restInterval = setInterval(() => {
+                    if (gameState.currentAction !== 'resting' || gameState.paused || gameState.inShop) {
+                        clearInterval(restInterval);
+                        return;
+                    }
+                    
+                    // Energy: 100% in 30 seconds = 3.333% per second (at home)
+                    gameState.player.energy = Math.min(100, gameState.player.energy + (100 / 30) / 10 * gameState.timeSpeed);
+                    
+                    // Frost: Remove 100% in 20 seconds = 5% per second (at home)
+                    gameState.player.frost = Math.max(0, gameState.player.frost - (100 / 20) / 10 * gameState.timeSpeed);
+                    
+                    updateMeters();
+                }, 100);
+            } else if (nearBuilding.type === 'bench') {
+                gameState.currentAction = 'resting';
+                document.getElementById('restOverlay').style.display = 'block';
+                
+                const restInterval = setInterval(() => {
+                    if (gameState.currentAction !== 'resting' || gameState.paused || gameState.inShop) {
+                        clearInterval(restInterval);
+                        return;
+                    }
+                    
+                    // Bench restores at 0.5x speed (twice as slow)
+                    // Energy: 100% in 60 seconds
+                    gameState.player.energy = Math.min(100, gameState.player.energy + (100 / 60) / 10 * gameState.timeSpeed);
+                    
+                    // Frost: Remove 100% in 40 seconds
+                    gameState.player.frost = Math.max(0, gameState.player.frost - (100 / 40) / 10 * gameState.timeSpeed);
+                    
+                    updateMeters();
+                }, 100);
+            } else if (nearBuilding.type === 'campfire') {
+                gameState.currentAction = 'resting';
+                document.getElementById('restOverlay').style.display = 'block';
+                
+                const restInterval = setInterval(() => {
+                    if (gameState.currentAction !== 'resting' || gameState.paused || gameState.inShop) {
+                        clearInterval(restInterval);
+                        return;
+                    }
+                    
+                    // Campfire restores at 0.5x speed
+                    // Energy: 100% in 60 seconds
+                    gameState.player.energy = Math.min(100, gameState.player.energy + (100 / 60) / 10 * gameState.timeSpeed);
+                    
+                    // Frost: Remove 100% in 40 seconds
+                    gameState.player.frost = Math.max(0, gameState.player.frost - (100 / 40) / 10 * gameState.timeSpeed);
+                    
+                    updateMeters();
+                }, 100);
+            } else if (nearBuilding.type === 'snowplow') {
+                // Enter snow plow if player owns keys (purchased from hardware store)
+                if (gameState.player.hasPlowKeys) {
+                    startPlowWinSequence();
+                }
+            } else if (nearBuilding.type === 'hardware') {
+                openShop('hardware');
+            } else if (nearBuilding.type === 'hotdog') {
+                openShop('hotdog');
+            } else if ((nearBuilding.type === 'house' || nearBuilding.type === 'bighouse' || nearBuilding.type === 'megahouse' || nearBuilding.type === 'snowbank') && nearBuilding.snowAmount > 0) {
+                // Check if player has required tool
+                if (!canClearBuilding(nearBuilding)) {
+                    return; // Button should be disabled anyway
+                }
+                startClearing(nearBuilding);
+            }
+        }
+
+        function startClearing(building) {
+            building.clearing = true;
+            gameState.currentAction = 'clearing';
+            animationState.currentAnimation = 'shoveling';
+            animationState.direction = 'down'; // Facing down while shoveling
+            updateActionButton();
+            
+            const clearInterval = setInterval(() => {
+                if (!building.clearing || gameState.paused || gameState.inShop) {
+                    clearInterval(clearInterval);
+                    animationState.currentAnimation = 'idle';
+                    return;
+                }
+                
+                const shovel = shovelTypes[gameState.player.shovel];
+                building.snowAmount -= shovel.speed * gameState.timeSpeed;
+                gameState.player.energy -= shovel.energyUse * 0.1 * gameState.timeSpeed;
+                
+                if (building.snowAmount <= 0) {
+                    building.snowAmount = 0;
+                    building.clearing = false;
+                    
+                    // Check if this was the snow bank (win condition)
+                    if (building.type === 'snowbank') {
+                        showWinScreen();
+                    } else {
+                        gameState.player.money += building.payment;
+                    }
+                    
+                    gameState.currentAction = null;
+                    animationState.currentAnimation = 'idle';
+                    clearInterval(clearInterval);
+                    updateActionButton();
+                }
+                
+                if (gameState.player.energy <= 0) {
+                    passOut();
+                    building.clearing = false;
+                    gameState.currentAction = null;
+                    animationState.currentAnimation = 'idle';
+                    clearInterval(clearInterval);
+                }
+                
+                updateMeters();
+            }, 100);
+        }
+
+        function startPlowWinSequence() {
+            // Pause player controls
+            gameState.paused = true;
+            gameState.currentAction = 'win_sequence';
+            
+            // Find snow plow and snow bank
+            const plowBuilding = gameState.buildings.find(b => b.type === 'snowplow');
+            const snowBank = gameState.buildings.find(b => b.type === 'snowbank');
+            
+            // Phase 1: Walk to plow
+            const walkToPlow = setInterval(() => {
+                const dx = plowBuilding.x + 50 - gameState.player.x;
+                const dy = plowBuilding.y + 70 - gameState.player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 5) {
+                    clearInterval(walkToPlow);
+                    // Phase 2: Drive plow following streets
+                    drivePlowToBank();
+                } else {
+                    gameState.player.x += (dx / distance) * 2;
+                    gameState.player.y += (dy / distance) * 2;
+                }
+            }, 16);
+            
+            function drivePlowToBank() {
+                // Position plow at player location (4th street, right side)
+                let plowX = gameState.player.x;
+                let plowY = gameState.player.y;
+                
+                // Hide player, show plow moving
+                const originalPlayerRender = drawPlayer;
+                window.drawPlayer = function() {
+                    // Draw plow instead of player
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(plowX - 60, plowY - 50, 120, 100);
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(plowX - 60, plowY - 50, 120, 100);
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('PLOW', plowX, plowY);
+                };
+                
+                // PHASE 2A: Drive DOWN to 4th street level, one tile past to be on the cross street
+                const driveDownInterval = setInterval(() => {
+                    const street4Y = 1200 + 160; // Drive down one full tile to be on the cross street
+                    
+                    if (plowY < street4Y) {
+                        plowY += 3;
+                        gameState.player.y = plowY;
+                    } else {
+                        plowY = street4Y; // Snap to position
+                        clearInterval(driveDownInterval);
+                        // PHASE 2B: Turn and drive LEFT to main street
+                        driveLeft();
+                    }
+                }, 16);
+                
+                function driveLeft() {
+                    const driveLeftInterval = setInterval(() => {
+                        const mainStreetX = 800; // Center of main street
+                        
+                        if (plowX > mainStreetX) {
+                            plowX -= 3;
+                            gameState.player.x = plowX;
+                        } else {
+                            plowX = mainStreetX; // Snap to main street
+                            clearInterval(driveLeftInterval);
+                            // PHASE 2C: Turn and drive UP toward snow bank
+                            driveUp();
+                        }
+                    }, 16);
+                }
+                
+                function driveUp() {
+                    const driveUpInterval = setInterval(() => {
+                        // Stop at bottom edge of snow bank (y + height)
+                        const targetY = snowBank.y + 80; // Snow bank height is 80px
+                        
+                        if (plowY > targetY) {
+                            plowY -= 3;
+                            gameState.player.y = plowY;
+                        } else {
+                            clearInterval(driveUpInterval);
+                            // PHASE 3: Stop and clear the snow bank
+                            clearSnowBank();
+                        }
+                    }, 16);
+                }
+                
+                function clearSnowBank() {
+                    // Brief pause at snow bank
+                    setTimeout(() => {
+                        const snowClearInterval = setInterval(() => {
+                            snowBank.snowAmount -= 50;
+                            
+                            if (snowBank.snowAmount <= 0) {
+                                snowBank.snowAmount = 0;
+                                clearInterval(snowClearInterval);
+                                // PHASE 4: Continue driving up off screen
+                                driveOffScreen();
+                            }
+                        }, 50);
+                    }, 500); // Half second pause
+                }
+                
+                function driveOffScreen() {
+                    const driveOffInterval = setInterval(() => {
+                        plowY -= 3;
+                        gameState.player.y = plowY;
+                        
+                        if (plowY < -100) {
+                            clearInterval(driveOffInterval);
+                            window.drawPlayer = originalPlayerRender;
+                            // PHASE 5: Show victory text
+                            showVictoryText();
+                        }
+                    }, 16);
+                }
+            }
+            
+            function showVictoryText() {
+                // Create overlay for text
+                const textOverlay = document.createElement('div');
+                textOverlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    z-index: 3000;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    opacity: 0;
+                    transition: opacity 1s;
+                `;
+                
+                const text1 = document.createElement('div');
+                text1.style.cssText = 'font-size: 24px; color: white; text-align: center; margin-bottom: 10px; font-weight: bold;';
+                text1.textContent = "You've cleared the snow and saved the town!";
+                
+                const text2 = document.createElement('div');
+                text2.style.cssText = 'font-size: 20px; color: white; text-align: center;';
+                text2.textContent = "Thanks for playing";
+                
+                textOverlay.appendChild(text1);
+                textOverlay.appendChild(text2);
+                document.body.appendChild(textOverlay);
+                
+                // Fade in
+                setTimeout(() => textOverlay.style.opacity = '1', 10);
+                
+                // Fade out after 4 seconds
+                setTimeout(() => {
+                    textOverlay.style.opacity = '0';
+                    setTimeout(() => {
+                        textOverlay.remove();
+                        showCredits();
+                    }, 1000);
+                }, 4000);
+            }
+            
+            function showCredits() {
+                const creditsOverlay = document.createElement('div');
+                creditsOverlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.9);
+                    z-index: 3000;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    opacity: 0;
+                    transition: opacity 1s;
+                `;
+                
+                const byText = document.createElement('div');
+                byText.style.cssText = 'font-size: 16px; color: #888; text-align: center; margin-bottom: 10px;';
+                byText.textContent = "A game by";
+                
+                const nameText = document.createElement('div');
+                nameText.style.cssText = 'font-size: 28px; color: white; text-align: center; font-weight: bold; margin-bottom: 30px;';
+                nameText.textContent = "Preston Stanley";
+                
+                const moreButton = document.createElement('button');
+                moreButton.textContent = "More by Preston";
+                moreButton.style.cssText = `
+                    background: #4CAF50;
+                    color: white;
+                    border: 3px solid #fff;
+                    padding: 15px 40px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    border-radius: 10px;
+                    cursor: pointer;
+                `;
+                moreButton.onclick = () => window.open('https://www.prestonstanley.com/', '_blank');
+                
+                creditsOverlay.appendChild(byText);
+                creditsOverlay.appendChild(nameText);
+                creditsOverlay.appendChild(moreButton);
+                document.body.appendChild(creditsOverlay);
+                
+                // Fade in
+                setTimeout(() => creditsOverlay.style.opacity = '1', 10);
+            }
+        }
+
+        function showWinScreen() {
+            gameState.paused = true;
+            const winScreen = document.createElement('div');
+            winScreen.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(15, 52, 96, 0.98);
+                z-index: 3000;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                padding: 20px;
+            `;
+            winScreen.innerHTML = `
+                <div style="font-size: 32px; font-weight: bold; color: #FFD700; margin-bottom: 20px;">🎉 YOU WIN! 🎉</div>
+                <div style="font-size: 18px; text-align: center; margin-bottom: 30px;">
+                    You cleared the massive snow bank!<br>
+                    Final Money: $${gameState.player.money}
+                </div>
+                <button onclick="location.reload()" style="background: #4CAF50; color: white; border: 3px solid #fff; padding: 15px 40px; font-size: 18px; font-weight: bold; border-radius: 10px; cursor: pointer;">
+                    PLAY AGAIN
+                </button>
+            `;
+            document.body.appendChild(winScreen);
+        }
+
+        function openShop(shopType) {
+            gameState.paused = true;
+            gameState.inShop = true;
+            const modal = document.getElementById('shopModal');
+            const shopTitle = document.getElementById('shopTitle');
+            const shopItems = document.getElementById('shopItems');
+            
+            modal.style.display = 'flex';
+            shopItems.innerHTML = '';
+            
+            if (shopType === 'hardware') {
+                shopTitle.textContent = 'HARDWARE STORE';
+                
+                // Current equipment section
+                let html = '<div class="shop-section"><div class="shop-section-title">CURRENT EQUIPMENT</div>';
+                html += `<div class="shop-item"><div class="shop-item-info">
+                    <div class="shop-item-name equipped">Shovel: ${shovelTypes[gameState.player.shovel].name}</div>
+                    <div class="shop-item-desc">Hat: ${gameState.player.clothing.hat ? 'Yes' : 'No'} | 
+                    Gloves: ${gameState.player.clothing.gloves ? 'Yes' : 'No'} | 
+                    Coat: ${gameState.player.clothing.coat ? 'Yes' : 'No'}</div>
+                </div></div></div>`;
+                
+                // Shovels section - only show unpurchased
+                let hasShovels = false;
+                let shovelsHtml = '';
+                for (let [key, shovel] of Object.entries(shovelTypes)) {
+                    if (key === gameState.player.shovel) continue;
+                    if (key === 'basic') continue; // Don't show basic
+                    
+                    // Check if this is an upgrade from current
+                    const toolOrder = ['basic', 'large', 'blower', 'plow'];
+                    const currentIndex = toolOrder.indexOf(gameState.player.shovel);
+                    const thisIndex = toolOrder.indexOf(key);
+                    if (thisIndex <= currentIndex) continue; // Already have this or better
+                    
+                    hasShovels = true;
+                    const canAfford = gameState.player.money >= shovel.price;
+                    shovelsHtml += `<div class="shop-item">
+                        <div class="shop-item-info">
+                            <div class="shop-item-name">${shovel.name}</div>
+                            <div class="shop-item-desc">Speed: ${shovel.speed}x | Energy: ${shovel.energyUse}x</div>
+                        </div>
+                        <div class="shop-item-price">$${shovel.price}</div>
+                        <button class="shop-buy-btn" onclick="buyShovel('${key}')" ${!canAfford ? 'disabled' : ''}>
+                            ${canAfford ? 'BUY' : 'LOCKED'}
+                        </button>
+                    </div>`;
+                }
+                if (hasShovels) {
+                    html += '<div class="shop-section"><div class="shop-section-title">SHOVELS</div>' + shovelsHtml + '</div>';
+                }
+                
+                // Clothing section - only show unpurchased
+                let hasClothing = false;
+                let clothingHtml = '';
+                for (let [key, item] of Object.entries(clothingItems)) {
+                    if (gameState.player.clothing[key]) continue;
+                    
+                    hasClothing = true;
+                    const canAfford = gameState.player.money >= item.price;
+                    clothingHtml += `<div class="shop-item">
+                        <div class="shop-item-info">
+                            <div class="shop-item-name">${item.name}</div>
+                            <div class="shop-item-desc">Frost resist: +${item.frostResist * 100}%</div>
+                        </div>
+                        <div class="shop-item-price">$${item.price}</div>
+                        <button class="shop-buy-btn" onclick="buyClothing('${key}')" ${!canAfford ? 'disabled' : ''}>
+                            ${canAfford ? 'BUY' : 'LOCKED'}
+                        </button>
+                    </div>`;
+                }
+                if (hasClothing) {
+                    html += '<div class="shop-section"><div class="shop-section-title">CLOTHING</div>' + clothingHtml + '</div>';
+                }
+                
+                // Special items section - Snow Plow Keys
+                if (!gameState.player.hasPlowKeys) {
+                    const canAfford = gameState.player.money >= specialItems.plowKeys.price;
+                    html += `<div class="shop-section"><div class="shop-section-title">SPECIAL</div>
+                        <div class="shop-item">
+                            <div class="shop-item-info">
+                                <div class="shop-item-name">${specialItems.plowKeys.name}</div>
+                                <div class="shop-item-desc">${specialItems.plowKeys.desc}</div>
+                            </div>
+                            <div class="shop-item-price">$${specialItems.plowKeys.price}</div>
+                            <button class="shop-buy-btn" onclick="buyPlowKeys()" ${!canAfford ? 'disabled' : ''}>
+                                ${canAfford ? 'BUY' : 'LOCKED'}
+                            </button>
+                        </div>
+                    </div>`;
+                }
+                
+                shopItems.innerHTML = html;
+            } else if (shopType === 'hotdog') {
+                shopTitle.textContent = 'HOT DOG STAND';
+                
+                let html = '<div class="shop-section"><div class="shop-section-title">MENU</div>';
+                for (let [key, item] of Object.entries(foodItems)) {
+                    const canAfford = gameState.player.money >= item.price;
+                    let effects = [];
+                    if (item.hunger > 0) effects.push(`Hunger +${item.hunger}%`);
+                    if (item.frost < 0) effects.push(`Frost ${item.frost}%`);  // Shows as -25%
+                    if (item.energy > 0) effects.push(`Energy +${item.energy}%`);
+                    const effect = effects.join(', ');
+                    
+                    html += `<div class="shop-item">
+                        <div class="shop-item-info">
+                            <div class="shop-item-name">${item.name}</div>
+                            <div class="shop-item-desc">${effect}</div>
+                        </div>
+                        <div class="shop-item-price">$${item.price}</div>
+                        <button class="shop-buy-btn" onclick="buyFood('${key}')" ${!canAfford ? 'disabled' : ''}>
+                            ${canAfford ? 'BUY' : 'LOCKED'}
+                        </button>
+                    </div>`;
+                }
+                html += '</div>';
+                
+                shopItems.innerHTML = html;
+            }
+        }
+
+        function closeShop() {
+            gameState.paused = false;
+            gameState.inShop = false;
+            document.getElementById('shopModal').style.display = 'none';
+        }
+
+        function buyShovel(shovelKey) {
+            const shovel = shovelTypes[shovelKey];
+            if (gameState.player.money >= shovel.price) {
+                gameState.player.money -= shovel.price;
+                gameState.player.shovel = shovelKey;
+                updateMeters();
+                updateEquipmentDisplay();
+                closeShop();
+                setTimeout(() => openShop('hardware'), 10);
+            }
+        }
+
+        function buyClothing(itemKey) {
+            const item = clothingItems[itemKey];
+            if (gameState.player.money >= item.price) {
+                gameState.player.money -= item.price;
+                gameState.player.clothing[itemKey] = true;
+                updateMeters();
+                updateEquipmentDisplay();
+                closeShop();
+                setTimeout(() => openShop('hardware'), 10);
+            }
+        }
+
+        function buyPlowKeys() {
+            if (gameState.player.money >= specialItems.plowKeys.price) {
+                gameState.player.money -= specialItems.plowKeys.price;
+                gameState.player.hasPlowKeys = true;
+                updateMeters();
+                closeShop();
+                // Don't reopen shop - player should go find the plow
+            }
+        }
+
+        function buyFood(foodKey) {
+            const food = foodItems[foodKey];
+            if (gameState.player.money >= food.price) {
+                gameState.player.money -= food.price;
+                gameState.player.hunger = Math.min(100, gameState.player.hunger + food.hunger);
+                gameState.player.frost = Math.max(0, gameState.player.frost + food.frost); // Coffee has -25, so this reduces frost
+                gameState.player.energy = Math.min(100, gameState.player.energy + (food.energy || 0));
+                updateMeters();
+                closeShop();
+                setTimeout(() => openShop('hotdog'), 10);
+            }
+        }
+
+        function passOut() {
+            animationState.currentAnimation = 'passedout';
+            setTimeout(() => {
+                alert('You passed out from exhaustion! Lost all your money to doctor bills.');
+                gameState.player.money = 0;
+                gameState.player.energy = 100;
+                gameState.player.hunger = 100;
+                gameState.player.frost = 0;  // Reset to warm
+                gameState.player.x = 1010;  // In front of home
+                gameState.player.y = 2720; // On 1st street at home's driveway
+                animationState.currentAnimation = 'idle';
+                causeSnowfall();
+                updateMeters();
+            }, 500); // Brief delay to show passout animation
+        }
+
+        function causeSnowfall() {
+            gameState.buildings.forEach(building => {
+                if (building.maxSnow > 0) {
+                    building.snowAmount = building.maxSnow;
+                }
+            });
+        }
+
+        function gameLoop() {
+            if (!gameState.paused && !gameState.inShop) {
+                const deltaTime = (1/60) * gameState.timeSpeed;
+                gameState.gameTime += deltaTime;
+                
+                // Increase frost while outside (1.5 minutes = 90 seconds to fully frost)
+                let frostRate = 100 / 90; // 1.111% per second
+                const clothingResist = 
+                    (gameState.player.clothing.hat ? clothingItems.hat.frostResist : 0) +
+                    (gameState.player.clothing.gloves ? clothingItems.gloves.frostResist : 0) +
+                    (gameState.player.clothing.coat ? clothingItems.coat.frostResist : 0);
+                frostRate *= (1 - clothingResist);
+                gameState.player.frost = Math.min(100, gameState.player.frost + frostRate * deltaTime);
+                
+                // Decrease hunger slowly (2 minutes = 120 seconds to drain fully) - but not while resting
+                if (gameState.currentAction !== 'resting') {
+                    const hungerRate = 100 / 120; // 0.833% per second
+                    gameState.player.hunger = Math.max(0, gameState.player.hunger - hungerRate * deltaTime);
+                }
+                
+                // Check for passout - only from energy now
+                if (gameState.player.energy <= 0) {
+                    passOut();
+                }
+                
+                updateMeters();
+                updateActionButton();
+            }
+            
+            updateCamera();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function timerLoop() {
+            if (!gameState.paused && !gameState.inShop) {
+                gameState.snowTimer -= gameState.timeSpeed;
+                if (gameState.snowTimer <= 0) {
+                    causeSnowfall();
+                    gameState.snowTimer = 120; // 2 minutes
+                }
+                updateTimer();
+            }
+        }
+
+        // Controls - Virtual Joystick
+        let joystickActive = false;
+
+        const dpad = document.getElementById('dpad');
+        const joystick = document.getElementById('joystick');
+        const dpadRect = dpad.getBoundingClientRect();
+        const maxDistance = 25; // Maximum joystick displacement from center
+
+        function updateJoystick(clientX, clientY) {
+            const rect = dpad.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            let deltaX = clientX - centerX;
+            let deltaY = clientY - centerY;
+            
+            // Limit to max distance
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            if (distance > maxDistance) {
+                deltaX = (deltaX / distance) * maxDistance;
+                deltaY = (deltaY / distance) * maxDistance;
+            }
+            
+            // Convert to 4-way direction
+            const angle = Math.atan2(deltaY, deltaX);
+            const degrees = angle * 180 / Math.PI;
+            
+            let dx = 0, dy = 0;
+            
+            if (distance > 10) { // Dead zone
+                if (degrees >= -45 && degrees < 45) {
+                    dx = 1; dy = 0; // Right
+                    deltaX = maxDistance; deltaY = 0;
+                } else if (degrees >= 45 && degrees < 135) {
+                    dx = 0; dy = 1; // Down
+                    deltaX = 0; deltaY = maxDistance;
+                } else if (degrees >= 135 || degrees < -135) {
+                    dx = -1; dy = 0; // Left
+                    deltaX = -maxDistance; deltaY = 0;
+                } else {
+                    dx = 0; dy = -1; // Up
+                    deltaX = 0; deltaY = -maxDistance;
+                }
+            }
+            
+            // Update joystick visual position
+            joystick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            
+            // Update movement
+            if (dx !== 0 || dy !== 0) {
+                if (!moveInterval || currentDirection.dx !== dx || currentDirection.dy !== dy) {
+                    stopMove();
+                    startMove(dx, dy);
+                }
+            } else {
+                stopMove();
+            }
+        }
+
+        function startMove(dx, dy) {
+            currentDirection = { dx, dy };
+            
+            // Set animation to walking and determine direction
+            animationState.currentAnimation = 'walking';
+            if (Math.abs(dx) > Math.abs(dy)) {
+                animationState.direction = dx > 0 ? 'right' : 'left';
+            } else {
+                animationState.direction = dy > 0 ? 'down' : 'up';
+            }
+            
+            if (!moveInterval) {
+                moveInterval = setInterval(() => {
+                    if (!gameState.paused && !gameState.inShop && gameState.currentAction !== 'clearing' && gameState.currentAction !== 'resting') {
+                        // Graduated frost speed penalty:
+                        // 0-30% frost = full speed
+                        // 31-100% frost = lose 1% speed per 2% frost above 30%
+                        // At 100% frost, speed reduced to 65% (35% penalty)
+                        let currentSpeed = gameState.player.speed;
+                        if (gameState.player.frost > 30) {
+                            const frostAbove30 = gameState.player.frost - 30;
+                            const speedPenalty = frostAbove30 / 2; // 1% per 2% frost
+                            currentSpeed *= (1 - speedPenalty / 100);
+                        }
+                        
+                        const newX = gameState.player.x + currentDirection.dx * currentSpeed;
+                        const newY = gameState.player.y + currentDirection.dy * currentSpeed;
+                        
+                        // Check if new position is on walkable surface
+                        if (isOnWalkableSurface(newX, newY)) {
+                            gameState.player.x = Math.max(20, Math.min(gameState.mapSize.width - 20, newX));
+                            gameState.player.y = Math.max(20, Math.min(gameState.mapSize.height - 20, newY));
+                        }
+                    }
+                }, 16);
+            }
+        }
+
+        function stopMove() {
+            if (moveInterval) {
+                clearInterval(moveInterval);
+                moveInterval = null;
+                currentDirection = null;
+            }
+            // Set animation to idle, keep last direction
+            animationState.currentAnimation = 'idle';
+            joystick.style.transform = 'translate(0, 0)';
+        }
+
+        // Joystick touch events
+        dpad.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            joystickActive = true;
+            const touch = e.touches[0];
+            updateJoystick(touch.clientX, touch.clientY);
+        });
+
+        dpad.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (joystickActive) {
+                const touch = e.touches[0];
+                updateJoystick(touch.clientX, touch.clientY);
+            }
+        });
+
+        dpad.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            joystickActive = false;
+            stopMove();
+        });
+
+        dpad.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            joystickActive = false;
+            stopMove();
+        });
+
+        // Mouse events for desktop
+        dpad.addEventListener('mousedown', (e) => {
+            joystickActive = true;
+            updateJoystick(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (joystickActive) {
+                updateJoystick(e.clientX, e.clientY);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (joystickActive) {
+                joystickActive = false;
+                stopMove();
+            }
+        });
+
+        document.getElementById('actionBtn').addEventListener('click', handleAction);
+
+        // Initialize resize listener
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Start button handler
+        document.getElementById('startButton').addEventListener('click', () => {
+            document.getElementById('introScreen').classList.add('hidden');
+            gameState.paused = false;
+            setInterval(timerLoop, 1000);
+            gameLoop();
+        });
+
+        // Pause button handler
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            gameState.paused = !gameState.paused;
+            document.getElementById('pauseBtn').textContent = gameState.paused ? 'RESUME' : 'PAUSE';
+        });
+
+        // Fast forward button handler
+        document.getElementById('ffwBtn').addEventListener('click', () => {
+            if (gameState.timeSpeed === 1) {
+                gameState.timeSpeed = 2;
+            } else if (gameState.timeSpeed === 2) {
+                gameState.timeSpeed = 4;
+            } else {
+                gameState.timeSpeed = 1;
+            }
+            document.getElementById('ffwBtn').textContent = gameState.timeSpeed + 'x';
+        });
+
+        // Initialize game
+        window.addEventListener('load', () => {
+            resizeCanvas();
+            initBuildings();
+            loadSprites(); // Load character spritesheets
+            updateMeters();
+            updateTimer();
+            updateActionButton();
+            
+            // Start render loop immediately (even while paused, for visuals)
+            function render() {
+                draw();
+                requestAnimationFrame(render);
+            }
+            render();
+        });
+    </script>
+</body>
+</html>
