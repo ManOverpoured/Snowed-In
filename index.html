@@ -506,8 +506,8 @@
         // Sprite system
         const spriteSheets = {};
         let spritesLoaded = false;
-        const SPRITE_WIDTH = 16;
-        const SPRITE_HEIGHT = 32;
+        const SPRITE_WIDTH = 69;  // Actual sprite width from spritesheet
+        const SPRITE_HEIGHT = 69; // Actual sprite height (square sprites)
         const SPRITES_PER_ROW = 7;
         
         // Animation state
@@ -799,6 +799,7 @@
             if (!spriteSheet) return;
             
             // Determine which row to use based on animation state
+            // NOTE: Rows 1-4 are ignored as per sprite instructions
             let row = 22; // Default to idle standing (row 23, 0-indexed = 22)
             let numFrames = 7;
             
@@ -837,13 +838,29 @@
             
             const sprite = getSpriteCoords(row, animationState.frame);
             
+            // Debug: Log sprite info occasionally
+            if (Math.random() < 0.01) {
+                console.log('Drawing sprite:', {
+                    animation: animationState.currentAnimation,
+                    row: row,
+                    frame: animationState.frame,
+                    spriteX: sprite.x,
+                    spriteY: sprite.y,
+                    spriteW: sprite.width,
+                    spriteH: sprite.height
+                });
+            }
+            
             // Draw sprite centered on player position
+            // Scale from 69x69 source to 16x32 display size
+            const displayWidth = 16;
+            const displayHeight = 32;
             ctx.drawImage(
                 spriteSheet,
                 sprite.x, sprite.y, sprite.width, sprite.height,
-                gameState.player.x - SPRITE_WIDTH / 2, 
-                gameState.player.y - SPRITE_HEIGHT / 2,
-                SPRITE_WIDTH, SPRITE_HEIGHT
+                gameState.player.x - displayWidth / 2, 
+                gameState.player.y - displayHeight / 2,
+                displayWidth, displayHeight
             );
         }
 
