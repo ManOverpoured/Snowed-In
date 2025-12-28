@@ -587,15 +587,19 @@
 
         // Load all character spritesheets
         function loadSprites() {
+            // UPDATE THIS PATH to match where you put the sprite files in your repo
+            // Examples: './' if same folder, './assets/', './sprites/', etc.
+            const SPRITE_PATH = './';
+            
             const spriteConfigs = [
-                { key: 'normal', path: '/mnt/user-data/uploads/character-spritesheet-Normal.png' },
-                { key: 'gloves', path: '/mnt/user-data/uploads/character-spritesheet-Gloves.png' },
-                { key: 'hat', path: '/mnt/user-data/uploads/character-spritesheet-hat.png' },
-                { key: 'jacket', path: '/mnt/user-data/uploads/character-spritesheet-jacket.png' },
-                { key: 'gloves-hat', path: '/mnt/user-data/uploads/character-spritesheet-gloves-hat.png' },
-                { key: 'gloves-jacket', path: '/mnt/user-data/uploads/character-spritesheet-gloves-jacket.png' },
-                { key: 'jacket-hat', path: '/mnt/user-data/uploads/character-spritesheet-jaket-hat.png' },
-                { key: 'gloves-jacket-hat', path: '/mnt/user-data/uploads/character-spritesheet-gloves-jacket-hat.png' }
+                { key: 'normal', path: SPRITE_PATH + 'character-spritesheet-Normal.png' },
+                { key: 'gloves', path: SPRITE_PATH + 'character-spritesheet-Gloves.png' },
+                { key: 'hat', path: SPRITE_PATH + 'character-spritesheet-hat.png' },
+                { key: 'jacket', path: SPRITE_PATH + 'character-spritesheet-jacket.png' },
+                { key: 'gloves-hat', path: SPRITE_PATH + 'character-spritesheet-gloves-hat.png' },
+                { key: 'gloves-jacket', path: SPRITE_PATH + 'character-spritesheet-gloves-jacket.png' },
+                { key: 'jacket-hat', path: SPRITE_PATH + 'character-spritesheet-jaket-hat.png' },
+                { key: 'gloves-jacket-hat', path: SPRITE_PATH + 'character-spritesheet-gloves-jacket-hat.png' }
             ];
             
             let loadedCount = 0;
