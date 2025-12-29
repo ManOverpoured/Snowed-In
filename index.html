@@ -1819,39 +1819,9 @@
             }
         });
 
-        document.getElementById('actionBtn').addEventListener('click', handleAction);
-
-        // Initialize resize listener
-        window.addEventListener('resize', resizeCanvas);
-        
-        // Start button handler
-        document.getElementById('startButton').addEventListener('click', () => {
-            document.getElementById('introScreen').classList.add('hidden');
-            gameState.paused = false;
-            setInterval(timerLoop, 1000);
-            gameLoop();
-        });
-
-        // Pause button handler
-        document.getElementById('pauseBtn').addEventListener('click', () => {
-            gameState.paused = !gameState.paused;
-            document.getElementById('pauseBtn').textContent = gameState.paused ? 'RESUME' : 'PAUSE';
-        });
-
-        // Fast forward button handler
-        document.getElementById('ffwBtn').addEventListener('click', () => {
-            if (gameState.timeSpeed === 1) {
-                gameState.timeSpeed = 2;
-            } else if (gameState.timeSpeed === 2) {
-                gameState.timeSpeed = 4;
-            } else {
-                gameState.timeSpeed = 1;
-            }
-            document.getElementById('ffwBtn').textContent = gameState.timeSpeed + 'x';
-        });
-
         // Initialize game
         window.addEventListener('load', () => {
+            console.log('Game initializing...');
             resizeCanvas();
             initBuildings();
             loadSprites(); // Load character spritesheets
@@ -1859,12 +1829,51 @@
             updateTimer();
             updateActionButton();
             
+            // Attach all event listeners AFTER DOM is ready
+            console.log('Attaching event listeners...');
+            
+            // Action button
+            document.getElementById('actionBtn').addEventListener('click', handleAction);
+            
+            // Start button handler
+            document.getElementById('startButton').addEventListener('click', () => {
+                console.log('Start button clicked!');
+                document.getElementById('introScreen').classList.add('hidden');
+                gameState.paused = false;
+                setInterval(timerLoop, 1000);
+                gameLoop();
+            });
+
+            // Pause button handler
+            document.getElementById('pauseBtn').addEventListener('click', () => {
+                gameState.paused = !gameState.paused;
+                document.getElementById('pauseBtn').textContent = gameState.paused ? 'RESUME' : 'PAUSE';
+            });
+
+            // Fast forward button handler
+            document.getElementById('ffwBtn').addEventListener('click', () => {
+                if (gameState.timeSpeed === 1) {
+                    gameState.timeSpeed = 2;
+                } else if (gameState.timeSpeed === 2) {
+                    gameState.timeSpeed = 4;
+                } else {
+                    gameState.timeSpeed = 1;
+                }
+                document.getElementById('ffwBtn').textContent = gameState.timeSpeed + 'x';
+            });
+            
+            // Resize listener
+            window.addEventListener('resize', resizeCanvas);
+            
             // Start render loop immediately (even while paused, for visuals)
             function render() {
                 draw();
                 requestAnimationFrame(render);
             }
             render();
+            console.log('Game initialized!');
+        });
+            console.log('Game initialized!');
         });
     </script>
 </body>
