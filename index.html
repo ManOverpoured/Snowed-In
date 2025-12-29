@@ -503,20 +503,21 @@
         let moveInterval = null;
         let currentDirection = { dx: 0, dy: 0 };
         
-        // Sprite system
-        const spriteSheets = {};
+        // Sprite system - SIMPLIFIED for single walking animation
+        let walkingSpriteSheet = null;
         let spritesLoaded = false;
-        const SPRITE_WIDTH = 481 / 7;  // Exact: 68.714285... (don't round!)
-        const SPRITE_HEIGHT = 481 / 7; // Keep square, same as width
-        const SPRITES_PER_ROW = 7;
+        const SPRITE_WIDTH = 156;   // 936px / 6 columns
+        const SPRITE_HEIGHT = 267;  // 1602px / 6 rows
+        const SPRITES_PER_ROW = 6;
+        const TOTAL_FRAMES = 36; // 6x6 grid
         
         // Animation state
         const animationState = {
             frame: 0,
             frameCounter: 0,
-            framesPerUpdate: 8, // Change sprite every 8 game frames
-            currentAnimation: 'idle', // 'idle', 'walking', 'shoveling', 'sitting', 'passedout'
-            direction: 'down' // 'up', 'down', 'left', 'right'
+            framesPerUpdate: 6, // Change sprite every 6 game frames for smooth animation
+            isMoving: false,
+            direction: 'right'
         };
         
         let gameState = {
@@ -585,57 +586,26 @@
             coat: { name: 'Winter Coat', frostResist: 0.3, price: 150 }
         };
 
-        // Load all character spritesheets
+        // Load walking spritesheet
         function loadSprites() {
-            // UPDATE THIS PATH to match where you put the sprite files in your repo
-            // Examples: './' if same folder, './assets/', './sprites/', etc.
             const SPRITE_PATH = './';
             
-            const spriteConfigs = [
-                { key: 'normal', path: SPRITE_PATH + 'character-spritesheet-Normal.png' },
-                { key: 'gloves', path: SPRITE_PATH + 'character-spritesheet-Gloves.png' },
-                { key: 'hat', path: SPRITE_PATH + 'character-spritesheet-hat.png' },
-                { key: 'jacket', path: SPRITE_PATH + 'character-spritesheet-jacket.png' },
-                { key: 'gloves-hat', path: SPRITE_PATH + 'character-spritesheet-gloves-hat.png' },
-                { key: 'gloves-jacket', path: SPRITE_PATH + 'character-spritesheet-gloves-jacket.png' },
-                { key: 'jacket-hat', path: SPRITE_PATH + 'character-spritesheet-jaket-hat.png' },
-                { key: 'gloves-jacket-hat', path: SPRITE_PATH + 'character-spritesheet-gloves-jacket-hat.png' }
-            ];
-            
-            let loadedCount = 0;
-            spriteConfigs.forEach(config => {
-                const img = new Image();
-                img.onload = () => {
-                    spriteSheets[config.key] = img;
-                    loadedCount++;
-                    if (loadedCount === spriteConfigs.length) {
-                        spritesLoaded = true;
-                        console.log('All sprites loaded!');
-                    }
-                };
-                img.onerror = () => {
-                    console.error('Failed to load sprite:', config.path);
-                };
-                img.src = config.path;
-            });
+            const img = new Image();
+            img.onload = () => {
+                walkingSpriteSheet = img;
+                spritesLoaded = true;
+                console.log('Walking sprite loaded!');
+            };
+            img.onerror = () => {
+                console.error('Failed to load sprite: ' + SPRITE_PATH + 'Walking-right.png');
+            };
+            img.src = SPRITE_PATH + 'Walking-right.png';
         }
         
-        // Get current spritesheet based on equipped clothing
-        function getCurrentSpriteSheet() {
-            const { hat, gloves, coat } = gameState.player.clothing;
-            
-            if (gloves && coat && hat) return spriteSheets['gloves-jacket-hat'];
-            if (gloves && coat) return spriteSheets['gloves-jacket'];
-            if (gloves && hat) return spriteSheets['gloves-hat'];
-            if (coat && hat) return spriteSheets['jacket-hat'];
-            if (gloves) return spriteSheets['gloves'];
-            if (hat) return spriteSheets['hat'];
-            if (coat) return spriteSheets['jacket'];
-            return spriteSheets['normal'];
-        }
-        
-        // Get sprite coordinates from spritesheet
-        function getSpriteCoords(row, col) {
+        // Get sprite coordinates from spritesheet (reads left-to-right, top-to-bottom)
+        function getSpriteCoords(frameIndex) {
+            const row = Math.floor(frameIndex / SPRITES_PER_ROW);
+            const col = frameIndex % SPRITES_PER_ROW;
             return {
                 x: col * SPRITE_WIDTH,
                 y: row * SPRITE_HEIGHT,
@@ -783,7 +753,7 @@
         }
 
         function drawPlayer() {
-            if (!spritesLoaded) {
+            if (!spritesLoaded || !walkingSpriteSheet) {
                 // Fallback to blue circle if sprites not loaded
                 ctx.fillStyle = '#0000FF';
                 ctx.beginPath();
@@ -795,92 +765,46 @@
                 return;
             }
             
-            const spriteSheet = getCurrentSpriteSheet();
-            if (!spriteSheet) return;
-            
-            // Determine which row to use based on animation state
-            // Each row is a complete animation - don't mix rows!
-            let row = 22; // Default to idle down
-            let numFrames = 5; // Most animations have 5 frames
-            
-            if (animationState.currentAnimation === 'passedout') {
-                row = 20; // Row 21 in 1-indexed (passed out)
-                numFrames = 5;
-                animationState.frame = Math.min(animationState.frame, numFrames - 1);
-            } else if (animationState.currentAnimation === 'sitting') {
-                row = 32; // Row 33 in 1-indexed (sitting) - but this row appears empty
-                // Fallback to idle for now since sitting row has no frames
-                row = 22;
-                numFrames = 5;
-                animationState.frame = 2; // Use middle frame
-            } else if (animationState.currentAnimation === 'shoveling') {
-                // Shoveling rows: up=5, left=6 (both have 5 frames)
-                // Use up (5) for up/down, left (6) for left/right
-                if (animationState.direction === 'left' || animationState.direction === 'right') {
-                    row = 6; // Shoveling left
-                } else {
-                    row = 5; // Shoveling up (use for down too)
-                }
-                numFrames = 5;
-            } else if (animationState.currentAnimation === 'walking') {
-                // Walking rows: right=8(7f), up=9(7f), left=10(7f), down=11(4f)
-                const walkingRows = { 
-                    right: { row: 8, frames: 7 },
-                    up: { row: 9, frames: 7 },
-                    left: { row: 10, frames: 7 },
-                    down: { row: 11, frames: 4 }
-                };
-                const walkData = walkingRows[animationState.direction] || walkingRows.down;
-                row = walkData.row;
-                numFrames = walkData.frames;
-            } else if (animationState.currentAnimation === 'idle') {
-                // Idle: Just use row 22 (idle down) with 5 frames for all directions
-                row = 22;
-                numFrames = 5;
-            }
-            
             // Update animation frame
-            animationState.frameCounter++;
-            if (animationState.frameCounter >= animationState.framesPerUpdate) {
-                animationState.frameCounter = 0;
-                if (numFrames > 1) {
-                    animationState.frame = (animationState.frame + 1) % numFrames;
+            if (animationState.isMoving) {
+                animationState.frameCounter++;
+                if (animationState.frameCounter >= animationState.framesPerUpdate) {
+                    animationState.frameCounter = 0;
+                    animationState.frame = (animationState.frame + 1) % TOTAL_FRAMES;
                 }
+            } else {
+                // Idle: use first frame
+                animationState.frame = 0;
+                animationState.frameCounter = 0;
             }
             
-            const sprite = getSpriteCoords(row, animationState.frame);
+            const sprite = getSpriteCoords(animationState.frame);
             
-            // Determine if we need to flip the sprite horizontally
-            // If facing left, flip the sprite
-            const shouldFlip = animationState.direction === 'left';
+            // Determine if we need to flip the sprite
+            // Left = flip horizontal, Up = flip vertical
+            const flipH = animationState.direction === 'left';
+            const flipV = animationState.direction === 'up';
             
-            // Draw sprite centered on player position
-            // Sprites are 68x68 in source, display at 32x64 (2 tiles tall, 2 tiles wide)
-            const displayWidth = 32;
-            const displayHeight = 64;
+            // Display size (scale down from 156x267 to reasonable game size)
+            const displayWidth = 32;   // 2 tiles wide
+            const displayHeight = 54;  // Maintain aspect ratio (267/156 * 32 ≈ 54)
             
             ctx.save();
+            ctx.translate(gameState.player.x, gameState.player.y);
             
-            if (shouldFlip) {
-                // Flip horizontally
-                ctx.translate(gameState.player.x + displayWidth / 2, gameState.player.y - displayHeight / 2);
-                ctx.scale(-1, 1);
-                ctx.drawImage(
-                    spriteSheet,
-                    sprite.x, sprite.y, sprite.width, sprite.height,
-                    0, 0,
-                    displayWidth, displayHeight
-                );
-            } else {
-                ctx.drawImage(
-                    spriteSheet,
-                    sprite.x, sprite.y, sprite.width, sprite.height,
-                    gameState.player.x - displayWidth / 2, 
-                    gameState.player.y - displayHeight / 2,
-                    displayWidth, displayHeight
-                );
+            if (flipH || flipV) {
+                ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
             }
             
+            ctx.drawImage(
+                walkingSpriteSheet,
+                sprite.x, sprite.y, sprite.width, sprite.height,
+                -displayWidth / 2, -displayHeight / 2,
+                displayWidth, displayHeight
+            );
+            
+            ctx.restore();
+        }
             ctx.restore();
         }
 
@@ -1207,14 +1131,12 @@
         function startClearing(building) {
             building.clearing = true;
             gameState.currentAction = 'clearing';
-            animationState.currentAnimation = 'shoveling';
-            animationState.direction = 'down'; // Facing down while shoveling
+            animationState.isMoving = false; // Stay idle while clearing
             updateActionButton();
             
             const clearInterval = setInterval(() => {
                 if (!building.clearing || gameState.paused || gameState.inShop) {
                     clearInterval(clearInterval);
-                    animationState.currentAnimation = 'idle';
                     return;
                 }
                 
@@ -1234,7 +1156,7 @@
                     }
                     
                     gameState.currentAction = null;
-                    animationState.currentAnimation = 'idle';
+                    animationState.isMoving = false;
                     clearInterval(clearInterval);
                     updateActionButton();
                 }
@@ -1243,7 +1165,7 @@
                     passOut();
                     building.clearing = false;
                     gameState.currentAction = null;
-                    animationState.currentAnimation = 'idle';
+                    animationState.isMoving = false;
                     clearInterval(clearInterval);
                 }
                 
@@ -1674,7 +1596,7 @@
         }
 
         function passOut() {
-            animationState.currentAnimation = 'passedout';
+            animationState.isMoving = false;
             setTimeout(() => {
                 alert('You passed out from exhaustion! Lost all your money to doctor bills.');
                 gameState.player.money = 0;
@@ -1683,7 +1605,7 @@
                 gameState.player.frost = 0;  // Reset to warm
                 gameState.player.x = 1010;  // In front of home
                 gameState.player.y = 2720; // On 1st street at home's driveway
-                animationState.currentAnimation = 'idle';
+                animationState.isMoving = false;
                 causeSnowfall();
                 updateMeters();
             }, 500); // Brief delay to show passout animation
@@ -1804,8 +1726,8 @@
         function startMove(dx, dy) {
             currentDirection = { dx, dy };
             
-            // Set animation to walking and determine direction
-            animationState.currentAnimation = 'walking';
+            // Set animation to moving and determine direction
+            animationState.isMoving = true;
             if (Math.abs(dx) > Math.abs(dy)) {
                 animationState.direction = dx > 0 ? 'right' : 'left';
             } else {
@@ -1845,8 +1767,8 @@
                 moveInterval = null;
                 currentDirection = null;
             }
-            // Set animation to idle, keep last direction
-            animationState.currentAnimation = 'idle';
+            // Set animation to idle (frame 0)
+            animationState.isMoving = false;
             joystick.style.transform = 'translate(0, 0)';
         }
 
