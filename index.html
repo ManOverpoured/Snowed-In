@@ -505,7 +505,9 @@
         
         // Sprite system - SIMPLIFIED for single walking animation
         let walkingSpriteSheet = null;
-        let groundTilemap = null;
+        let transitionTilemap = null;  // path-tilemap.png (transitions)
+        let snowTile = null;            // snow-tilemap.png (big snow areas)
+        let pathTile = null;            // floor-tile.png (street centers)
         let spritesLoaded = false;
         const SPRITE_WIDTH = 156;   // 936px / 6 columns
         const SPRITE_HEIGHT = 267;  // 1602px / 6 rows
@@ -592,12 +594,12 @@
             coat: { name: 'Winter Coat', frostResist: 0.3, price: 150 }
         };
 
-        // Load walking spritesheet and ground tilemap
+        // Load walking spritesheet and all ground tiles
         function loadSprites() {
             const SPRITE_PATH = './';
             
             let loadedCount = 0;
-            const totalToLoad = 2;
+            const totalToLoad = 4;  // walking sprite + 3 tile images
             
             function checkAllLoaded() {
                 loadedCount++;
@@ -619,17 +621,41 @@
             };
             walkingImg.src = SPRITE_PATH + 'Walking-right.png';
             
-            // Load ground tilemap
-            const tilemapImg = new Image();
-            tilemapImg.onload = () => {
-                groundTilemap = tilemapImg;
-                console.log('Ground tilemap loaded!');
+            // Load transition tilemap (path-tilemap.png)
+            const transitionImg = new Image();
+            transitionImg.onload = () => {
+                transitionTilemap = transitionImg;
+                console.log('Transition tilemap loaded!');
                 checkAllLoaded();
             };
-            tilemapImg.onerror = () => {
+            transitionImg.onerror = () => {
                 console.error('Failed to load tilemap: ' + SPRITE_PATH + 'path-tilemap.png');
             };
-            tilemapImg.src = SPRITE_PATH + 'path-tilemap.png';
+            transitionImg.src = SPRITE_PATH + 'path-tilemap.png';
+            
+            // Load snow tile (snow-tilemap.png)
+            const snowImg = new Image();
+            snowImg.onload = () => {
+                snowTile = snowImg;
+                console.log('Snow tile loaded!');
+                checkAllLoaded();
+            };
+            snowImg.onerror = () => {
+                console.error('Failed to load tile: ' + SPRITE_PATH + 'snow-tilemap.png');
+            };
+            snowImg.src = SPRITE_PATH + 'snow-tilemap.png';
+            
+            // Load path tile (floor-tile.png)
+            const pathImg = new Image();
+            pathImg.onload = () => {
+                pathTile = pathImg;
+                console.log('Path tile loaded!');
+                checkAllLoaded();
+            };
+            pathImg.onerror = () => {
+                console.error('Failed to load tile: ' + SPRITE_PATH + 'floor-tile.png');
+            };
+            pathImg.src = SPRITE_PATH + 'floor-tile.png';
         }
         
         // Get sprite coordinates from spritesheet (reads left-to-right, top-to-bottom)
@@ -644,7 +670,9 @@
             };
         }
         
-        // Get tile from tilemap (4x4 grid of 16x16 tiles)
+        // Get tile from transition tilemap (4x4 grid: A-D columns, 1-4 rows)
+        // A=0, B=1, C=2, D=3 (columns)
+        // 1=0, 2=1, 3=2, 4=3 (rows, 0-indexed)
         function getTileCoords(tileCol, tileRow) {
             return {
                 x: tileCol * TILE_SIZE,
@@ -654,26 +682,22 @@
             };
         }
         
-        // Tilemap indices (for reference):
-        // Row 0: corner BL (0,0), edge bottom (1,0), edge bottom (2,0), edge left (3,0)
-        // Row 1: edge right (0,1), path center (1,1), path center (2,1), edge left (3,1)
-        // Row 2: edge right (0,2), path center (1,2), path center (2,2), edge left (3,2)
-        // Row 3: snow (0,3), snow (1,3), snow (2,3), snow edge right (3,3)
-        const TILES = {
-            SNOW: { col: 0, row: 3 },
-            PATH: { col: 1, row: 1 },
-            EDGE_LEFT: { col: 3, row: 1 },
-            EDGE_RIGHT: { col: 0, row: 1 },
-            EDGE_TOP: { col: 1, row: 0 },
-            EDGE_BOTTOM: { col: 1, row: 0 },
-            CORNER_TL: { col: 0, row: 0 },  // Top-left corner
-            CORNER_TR: { col: 3, row: 0 },  // Top-right corner
-            CORNER_BL: { col: 0, row: 0 },  // Bottom-left corner
-            CORNER_BR: { col: 3, row: 3 }   // Bottom-right corner
+        // Transition tile positions in the 4x4 grid
+        const TRANS = {
+            // Street edges (transitions from path to snow)
+            EDGE_LEFT: { col: 0, row: 1 },   // A2 - Left edge of main street
+            EDGE_RIGHT: { col: 2, row: 3 },  // C4 - Right edge of main street
+            EDGE_TOP: { col: 0, row: 3 },    // A4 - Top edge of cross streets
+            EDGE_BOTTOM: { col: 2, row: 1 }, // C2 - Bottom edge of cross streets
+            
+            // Intersection corners
+            CORNER_TR: { col: 0, row: 2 },   // A3 - Top-right corner of intersection
+            CORNER_BR: { col: 1, row: 3 },   // B4 - Bottom-right corner of intersection
+            CORNER_BL: { col: 2, row: 2 }    // C3 - Bottom-left corner of intersection
         };
         
         function drawGround() {
-            if (!groundTilemap) return;
+            if (!transitionTilemap || !snowTile || !pathTile) return;
             
             const mainStreet = 800;
             const streetWidth = 100;
@@ -692,46 +716,94 @@
             // Draw tiles
             for (let y = startY; y < endY && y < gameState.mapSize.height; y += TILE_SIZE) {
                 for (let x = startX; x < endX && x < gameState.mapSize.width; x += TILE_SIZE) {
-                    let tile = TILES.SNOW; // Default to snow
                     
                     // Check if on main street (vertical)
                     const onMainStreet = x >= streetLeft && x < streetRight;
+                    const leftEdge = x === streetLeft;
+                    const rightEdge = x === streetRight - TILE_SIZE;
                     
                     // Check if on any cross street (horizontal)
                     let onCrossStreet = false;
+                    let topEdge = false;
+                    let bottomEdge = false;
                     for (let streetY of crossStreets) {
                         if (y >= streetY && y < streetY + crossStreetHeight) {
                             onCrossStreet = true;
+                            topEdge = y === streetY;
+                            bottomEdge = y === streetY + crossStreetHeight - TILE_SIZE;
                             break;
                         }
                     }
                     
+                    let tileImage = null;
+                    let tileCoords = null;
+                    
                     // Determine which tile to use
                     if (onMainStreet && onCrossStreet) {
-                        tile = TILES.PATH; // Intersection
-                    } else if (onMainStreet) {
-                        // On vertical street
-                        if (x === streetLeft) {
-                            tile = TILES.EDGE_LEFT;
-                        } else if (x === streetRight - TILE_SIZE) {
-                            tile = TILES.EDGE_RIGHT;
+                        // INTERSECTION
+                        if (topEdge && rightEdge) {
+                            // Top-right corner
+                            tileCoords = getTileCoords(TRANS.CORNER_TR.col, TRANS.CORNER_TR.row);
+                            tileImage = transitionTilemap;
+                        } else if (bottomEdge && rightEdge) {
+                            // Bottom-right corner
+                            tileCoords = getTileCoords(TRANS.CORNER_BR.col, TRANS.CORNER_BR.row);
+                            tileImage = transitionTilemap;
+                        } else if (bottomEdge && leftEdge) {
+                            // Bottom-left corner
+                            tileCoords = getTileCoords(TRANS.CORNER_BL.col, TRANS.CORNER_BL.row);
+                            tileImage = transitionTilemap;
                         } else {
-                            tile = TILES.PATH;
+                            // Intersection center - use path tile
+                            tileImage = pathTile;
+                        }
+                    } else if (onMainStreet) {
+                        // ON VERTICAL MAIN STREET
+                        if (leftEdge) {
+                            // Left edge transition (A2)
+                            tileCoords = getTileCoords(TRANS.EDGE_LEFT.col, TRANS.EDGE_LEFT.row);
+                            tileImage = transitionTilemap;
+                        } else if (rightEdge) {
+                            // Right edge transition (C4)
+                            tileCoords = getTileCoords(TRANS.EDGE_RIGHT.col, TRANS.EDGE_RIGHT.row);
+                            tileImage = transitionTilemap;
+                        } else {
+                            // Center of street - use path tile
+                            tileImage = pathTile;
                         }
                     } else if (onCrossStreet) {
-                        // On horizontal street
-                        tile = TILES.PATH;
+                        // ON HORIZONTAL CROSS STREET
+                        if (topEdge) {
+                            // Top edge transition (A4)
+                            tileCoords = getTileCoords(TRANS.EDGE_TOP.col, TRANS.EDGE_TOP.row);
+                            tileImage = transitionTilemap;
+                        } else if (bottomEdge) {
+                            // Bottom edge transition (C2)
+                            tileCoords = getTileCoords(TRANS.EDGE_BOTTOM.col, TRANS.EDGE_BOTTOM.row);
+                            tileImage = transitionTilemap;
+                        } else {
+                            // Center of street - use path tile
+                            tileImage = pathTile;
+                        }
                     } else {
-                        // Snow/grass area
-                        tile = TILES.SNOW;
+                        // SNOW/GRASS AREA - use snow tile
+                        tileImage = snowTile;
                     }
                     
-                    const tileCoords = getTileCoords(tile.col, tile.row);
-                    ctx.drawImage(
-                        groundTilemap,
-                        tileCoords.x, tileCoords.y, tileCoords.width, tileCoords.height,
-                        x, y, TILE_SIZE, TILE_SIZE
-                    );
+                    // Draw the tile
+                    if (tileImage) {
+                        if (tileCoords) {
+                            // Draw from tilemap
+                            ctx.drawImage(
+                                tileImage,
+                                tileCoords.x, tileCoords.y, tileCoords.width, tileCoords.height,
+                                x, y, TILE_SIZE, TILE_SIZE
+                            );
+                        } else {
+                            // Draw single tile (snow or path)
+                            ctx.drawImage(tileImage, x, y, TILE_SIZE, TILE_SIZE);
+                        }
+                    }
                 }
             }
         }
