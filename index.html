@@ -1134,9 +1134,9 @@
             animationState.isMoving = false; // Stay idle while clearing
             updateActionButton();
             
-            const clearInterval = setInterval(() => {
+            const clearingInterval = setInterval(() => {
                 if (!building.clearing || gameState.paused || gameState.inShop) {
-                    clearInterval(clearInterval);
+                    clearInterval(clearingInterval);
                     return;
                 }
                 
@@ -1157,7 +1157,7 @@
                     
                     gameState.currentAction = null;
                     animationState.isMoving = false;
-                    clearInterval(clearInterval);
+                    clearInterval(clearingInterval);
                     updateActionButton();
                 }
                 
@@ -1166,7 +1166,7 @@
                     building.clearing = false;
                     gameState.currentAction = null;
                     animationState.isMoving = false;
-                    clearInterval(clearInterval);
+                    clearInterval(clearingInterval);
                 }
                 
                 updateMeters();
