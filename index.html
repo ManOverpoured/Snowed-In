@@ -541,7 +541,7 @@
                 height: 2100  // Reduced from 3000 (30% smaller)
             },
             player: {
-                x: 707,   // Reduced from 1010 (rightZone on new map)
+                x: 675,   // Updated: rightZone - 32 (home moved 2 tiles left)
                 y: 1904,  // Reduced from 2720 (on 1st street)
                 speed: 1.6,
                 energy: 100,
@@ -832,33 +832,33 @@
                 { type: 'snowbank', x: mainStreet - 75, y: 35, snowAmount: 1000, maxSnow: 1000, payment: 0 },
                 
                 // 5TH STREET - 2 Fancy houses
-                { type: 'megahouse', x: leftZone - 140, y: 490 - 220, snowAmount: 300, maxSnow: 300, payment: 100, requiredTool: 'blower' },
-                { type: 'megahouse', x: rightZone, y: 490 - 220, snowAmount: 300, maxSnow: 300, payment: 100, requiredTool: 'blower' },
+                { type: 'megahouse', x: leftZone - 140, y: 490 - 220, snowAmount: 300, maxSnow: 300, payment: 100, requiredTool: 'blower' }, // Left: stays put
+                { type: 'megahouse', x: rightZone - 16, y: 490 - 220, snowAmount: 300, maxSnow: 300, payment: 100, requiredTool: 'blower' }, // Right: -1 tile
                 
                 // 4TH STREET
                 { type: 'bench', x: leftZone - buildingSpacing, y: 840 - 40, snowAmount: 0, maxSnow: 0 },
-                { type: 'bighouse', x: leftZone - 60, y: 840 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' },
-                { type: 'hardware', x: rightZone, y: 840 - 180, snowAmount: 0, maxSnow: 0 },
-                { type: 'snowplow', x: rightZone + 190, y: 840 - 140, snowAmount: 0, maxSnow: 0 },
-                { type: 'bighouse', x: rightZone + 340, y: 840 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' },
+                { type: 'bighouse', x: leftZone - 60 - 16, y: 840 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' }, // -1 tile
+                { type: 'hardware', x: rightZone - 32, y: 840 - 180, snowAmount: 0, maxSnow: 0 }, // -2 tiles
+                { type: 'snowplow', x: rightZone + 190 - 32, y: 840 - 140, snowAmount: 0, maxSnow: 0 }, // -2 tiles
+                { type: 'bighouse', x: rightZone + 340 - 16, y: 840 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' }, // -1 tile
                 
                 // 3RD STREET
-                { type: 'bighouse', x: leftZone - 60, y: 1190 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' },
+                { type: 'bighouse', x: leftZone - 60 - 16, y: 1190 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' }, // -1 tile
                 { type: 'hotdog', x: rightZone, y: 1190 - 140, snowAmount: 0, maxSnow: 0 },
                 { type: 'bench', x: rightZone + 150, y: 1190 - 40, snowAmount: 0, maxSnow: 0 },
                 { type: 'campfire', x: rightZone + 220, y: 1190 - 60, snowAmount: 0, maxSnow: 0 },
                 
-                // 2ND STREET - 4 normal houses
-                { type: 'house', x: leftZone - buildingSpacing, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
-                { type: 'house', x: leftZone, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
-                { type: 'house', x: rightZone, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
-                { type: 'house', x: rightZone + buildingSpacing, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                // 2ND STREET - 4 normal houses (all -2 tiles)
+                { type: 'house', x: leftZone - buildingSpacing - 32, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }, // -2 tiles
+                { type: 'house', x: leftZone - 32, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }, // -2 tiles
+                { type: 'house', x: rightZone - 32, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }, // -2 tiles
+                { type: 'house', x: rightZone + buildingSpacing - 32, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }, // -2 tiles
                 
-                // 1ST STREET
-                { type: 'house', x: leftZone - buildingSpacing, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
-                { type: 'house', x: leftZone, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
-                { type: 'home', x: rightZone, y: 1890 - 200, snowAmount: 0, maxSnow: 0 },
-                { type: 'house', x: rightZone + buildingSpacing, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }
+                // 1ST STREET (all -2 tiles)
+                { type: 'house', x: leftZone - buildingSpacing - 32, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }, // -2 tiles
+                { type: 'house', x: leftZone - 32, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }, // -2 tiles
+                { type: 'home', x: rightZone - 32, y: 1890 - 200, snowAmount: 0, maxSnow: 0 }, // -2 tiles
+                { type: 'house', x: rightZone + buildingSpacing - 32, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' } // -2 tiles
             ];
         }
 
@@ -1802,7 +1802,7 @@
                 gameState.player.energy = 100;
                 gameState.player.hunger = 100;
                 gameState.player.frost = 0;  // Reset to warm
-                gameState.player.x = 707;   // In front of home (updated)
+                gameState.player.x = 675;   // In front of home (updated: -2 tiles)
                 gameState.player.y = 1904;  // On 1st street at home's driveway (updated)
                 animationState.isMoving = false;
                 causeSnowfall();
