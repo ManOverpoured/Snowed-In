@@ -905,10 +905,24 @@
             // Restore context
             ctx.restore();
             
-            // Draw hunger indicator if needed (in screen space, not world space)
-            if (gameState.player.hunger <= 0) {
-                const screenX = canvas.width / 2;
-                const screenY = canvas.height / 2 - 20;
+            // Draw hunger/frost indicators if needed (in screen space, not world space)
+            const screenX = canvas.width / 2;
+            const screenY = canvas.height / 2 - 20;
+            
+            if (gameState.player.hunger <= 0 && gameState.player.frost >= 100) {
+                // Both hungry and cold
+                ctx.fillStyle = '#0099FF';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText("I'm cold and hungry!", screenX, screenY);
+            } else if (gameState.player.frost >= 100) {
+                // Just cold
+                ctx.fillStyle = '#0099FF';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText("I'm so c-c-cold!", screenX, screenY);
+            } else if (gameState.player.hunger <= 0) {
+                // Just hungry
                 ctx.fillStyle = '#FF0000';
                 ctx.font = 'bold 10px Arial';
                 ctx.textAlign = 'center';
@@ -996,6 +1010,11 @@
                     // Check if player is too hungry
                     if (gameState.player.hunger <= 0) {
                         btn.textContent = 'TOO HUNGRY';
+                        btn.disabled = true;
+                    }
+                    // Check if player is too cold
+                    else if (gameState.player.frost >= 100) {
+                        btn.textContent = 'TOO COLD';
                         btn.disabled = true;
                     }
                     // Check if player has required tool
