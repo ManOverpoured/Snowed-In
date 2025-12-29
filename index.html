@@ -541,8 +541,8 @@
                 height: 2100  // Reduced from 3000 (30% smaller)
             },
             player: {
-                x: 675,   // Updated: rightZone - 32 (home moved 2 tiles left)
-                y: 1904,  // Reduced from 2720 (on 1st street)
+                x: 627,   // Updated: rightZone - 80 (home moved 5 tiles left total)
+                y: 1904,  // On 1st street
                 speed: 1.6,
                 energy: 100,
                 hunger: 100,
@@ -704,7 +704,7 @@
             const streetLeft = mainStreet - streetWidth / 2;
             const streetRight = mainStreet + streetWidth / 2;
             
-            const crossStreets = [1890, 1540, 1190, 840, 490, 140];  // New street positions
+            const crossStreets = [1890, 1540, 1190, 840, 490];  // Removed 6th street (was 140)
             const crossStreetHeight = 100;
             
             // Calculate visible tile range based on camera
@@ -848,17 +848,17 @@
                 { type: 'bench', x: rightZone + 150, y: 1190 - 40, snowAmount: 0, maxSnow: 0 },
                 { type: 'campfire', x: rightZone + 220, y: 1190 - 60, snowAmount: 0, maxSnow: 0 },
                 
-                // 2ND STREET - 4 normal houses (all -2 tiles)
-                { type: 'house', x: leftZone - buildingSpacing - 32, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }, // -2 tiles
-                { type: 'house', x: leftZone - 32, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }, // -2 tiles
-                { type: 'house', x: rightZone - 32, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }, // -2 tiles
-                { type: 'house', x: rightZone + buildingSpacing - 32, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }, // -2 tiles
+                // 2ND STREET - 4 normal houses (moved 2 tiles + extra 3 tiles = 5 tiles total = -80px)
+                { type: 'house', x: leftZone - buildingSpacing - 80, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                { type: 'house', x: leftZone - 80, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                { type: 'house', x: rightZone - 80, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                { type: 'house', x: rightZone + buildingSpacing - 80, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
                 
-                // 1ST STREET (all -2 tiles)
-                { type: 'house', x: leftZone - buildingSpacing - 32, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }, // -2 tiles
-                { type: 'house', x: leftZone - 32, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }, // -2 tiles
-                { type: 'home', x: rightZone - 32, y: 1890 - 200, snowAmount: 0, maxSnow: 0 }, // -2 tiles
-                { type: 'house', x: rightZone + buildingSpacing - 32, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' } // -2 tiles
+                // 1ST STREET (moved 2 tiles + extra 3 tiles = 5 tiles total = -80px)
+                { type: 'house', x: leftZone - buildingSpacing - 80, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                { type: 'house', x: leftZone - 80, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                { type: 'home', x: rightZone - 80, y: 1890 - 200, snowAmount: 0, maxSnow: 0 },
+                { type: 'house', x: rightZone + buildingSpacing - 80, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }
             ];
         }
 
@@ -1016,8 +1016,8 @@
                 return true;
             }
             
-            // Check if on any cross street (1st through 6th)
-            const crossStreets = [1890, 1540, 1190, 840, 490, 140];  // Updated
+            // Check if on any cross street (1st through 5th)
+            const crossStreets = [1890, 1540, 1190, 840, 490];  // Removed 6th street
             const crossStreetHeight = 100;
             
             for (let streetY of crossStreets) {
@@ -1078,37 +1078,46 @@
             ctx.restore();
             
             // Draw hunger/frost indicators if needed (in screen space, not world space)
-            const screenX = canvas.width / 2;
-            const screenY = canvas.height / 2 - 40;
+            // Only show when camera is properly centered on player (not at map edges)
+            const isCameraCentered = 
+                gameState.camera.x > 0 && 
+                gameState.camera.x < gameState.mapSize.width - canvas.width &&
+                gameState.camera.y > 0 && 
+                gameState.camera.y < gameState.mapSize.height - canvas.height;
             
-            let statusText = null;
-            let textColor = null;
-            
-            if (gameState.player.hunger <= 0 && gameState.player.frost >= 100) {
-                // Both hungry and cold
-                statusText = "I'm cold and hungry!";
-                textColor = '#0099FF';
-            } else if (gameState.player.frost >= 100) {
-                // Just cold
-                statusText = "I'm so c-c-cold!";
-                textColor = '#0099FF';
-            } else if (gameState.player.hunger <= 0) {
-                // Just hungry
-                statusText = "I'm so hungry!";
-                textColor = '#FF0000';
-            }
-            
-            if (statusText) {
-                // Draw semi-transparent background
-                ctx.font = 'bold 16px Arial';
-                ctx.textAlign = 'center';
-                const textWidth = ctx.measureText(statusText).width;
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(screenX - textWidth/2 - 8, screenY - 18, textWidth + 16, 24);
+            if (isCameraCentered) {
+                const screenX = canvas.width / 2;
+                const screenY = canvas.height / 2 - 40;
                 
-                // Draw text
-                ctx.fillStyle = textColor;
-                ctx.fillText(statusText, screenX, screenY);
+                let statusText = null;
+                let textColor = null;
+                
+                if (gameState.player.hunger <= 0 && gameState.player.frost >= 100) {
+                    // Both hungry and cold
+                    statusText = "I'm cold and hungry!";
+                    textColor = '#0099FF';
+                } else if (gameState.player.frost >= 100) {
+                    // Just cold
+                    statusText = "I'm so c-c-cold!";
+                    textColor = '#0099FF';
+                } else if (gameState.player.hunger <= 0) {
+                    // Just hungry
+                    statusText = "I'm so hungry!";
+                    textColor = '#FF0000';
+                }
+                
+                if (statusText) {
+                    // Draw semi-transparent background
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    const textWidth = ctx.measureText(statusText).width;
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(screenX - textWidth/2 - 8, screenY - 18, textWidth + 16, 24);
+                    
+                    // Draw text
+                    ctx.fillStyle = textColor;
+                    ctx.fillText(statusText, screenX, screenY);
+                }
             }
         }
 
@@ -1802,8 +1811,8 @@
                 gameState.player.energy = 100;
                 gameState.player.hunger = 100;
                 gameState.player.frost = 0;  // Reset to warm
-                gameState.player.x = 675;   // In front of home (updated: -2 tiles)
-                gameState.player.y = 1904;  // On 1st street at home's driveway (updated)
+                gameState.player.x = 627;   // In front of home (updated: -5 tiles total)
+                gameState.player.y = 1904;  // On 1st street at home's driveway
                 animationState.isMoving = false;
                 causeSnowfall();
                 updateMeters();
