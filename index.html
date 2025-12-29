@@ -537,12 +537,12 @@
                 y: 0
             },
             mapSize: {
-                width: 1600,  // Even wider for proper side street spacing
-                height: 3000  // Taller for bigger blocks
+                width: 1120,  // Reduced from 1600 (30% smaller)
+                height: 2100  // Reduced from 3000 (30% smaller)
             },
             player: {
-                x: 1010,  // Aligned with home (rightZone)
-                y: 2720,  // On 1st street, at end of home's driveway
+                x: 707,   // Reduced from 1010 (rightZone on new map)
+                y: 1904,  // Reduced from 2720 (on 1st street)
                 speed: 1.6,
                 energy: 100,
                 hunger: 100,
@@ -699,12 +699,12 @@
         function drawGround() {
             if (!transitionTilemap || !snowTile || !pathTile) return;
             
-            const mainStreet = 800;
+            const mainStreet = 560;  // Reduced from 800
             const streetWidth = 100;
             const streetLeft = mainStreet - streetWidth / 2;
             const streetRight = mainStreet + streetWidth / 2;
             
-            const crossStreets = [2700, 2200, 1700, 1200, 700, 200];
+            const crossStreets = [1890, 1540, 1190, 840, 490, 140];  // New street positions
             const crossStreetHeight = 100;
             
             // Calculate visible tile range based on camera
@@ -809,59 +809,56 @@
         }
 
         function initBuildings() {
-            const mainStreet = 800; // Center X
-            const tileWidth = 160; // Base tile width for spacing
+            const mainStreet = 560; // Reduced from 800 (30% smaller)
+            const tileWidth = 112; // Reduced from 160 (30% smaller)
             
-            // Cross street Y positions (bottom to top: 1st, 2nd, 3rd, 4th, 5th, 6th)
-            const street1Y = 2700;
-            const street2Y = 2200;
-            const street3Y = 1700;
-            const street4Y = 1200;
-            const street5Y = 700;
-            const street6Y = 200;
+            // Cross street Y positions - closer together (350 units apart instead of 500)
+            const street1Y = 1890; // Was 2700
+            const street2Y = 1540; // Was 2200
+            const street3Y = 1190; // Was 1700
+            const street4Y = 840;  // Was 1200
+            const street5Y = 490;  // Was 700
+            const street6Y = 140;  // Was 200
             
-            // Left and right zones (1 tile away from main street)
-            const leftZone = mainStreet - 50 - tileWidth; // 1 tile from main street left edge
-            const rightZone = mainStreet + 50 + tileWidth; // 1 tile from main street right edge
+            // Left and right zones (closer to main street)
+            const leftZone = mainStreet - 50 - tileWidth; // Closer spacing
+            const rightZone = mainStreet + 50 + tileWidth; // Closer spacing
+            
+            // Horizontal building spacing reduced to ~280 units (was 400)
+            const buildingSpacing = 280;
             
             gameState.buildings = [
                 // Snow bank at very top - IN main street above 6th street
-                { type: 'snowbank', x: mainStreet - 75, y: 50, snowAmount: 1000, maxSnow: 1000, payment: 0 },
+                { type: 'snowbank', x: mainStreet - 75, y: 35, snowAmount: 1000, maxSnow: 1000, payment: 0 },
                 
-                // 5TH STREET - 2 Fancy houses (well spaced)
-                { type: 'megahouse', x: leftZone - 200, y: 700 - 220, snowAmount: 300, maxSnow: 300, payment: 100, requiredTool: 'blower' },
-                { type: 'megahouse', x: rightZone, y: 700 - 220, snowAmount: 300, maxSnow: 300, payment: 100, requiredTool: 'blower' },
+                // 5TH STREET - 2 Fancy houses
+                { type: 'megahouse', x: leftZone - 140, y: 490 - 220, snowAmount: 300, maxSnow: 300, payment: 100, requiredTool: 'blower' },
+                { type: 'megahouse', x: rightZone, y: 490 - 220, snowAmount: 300, maxSnow: 300, payment: 100, requiredTool: 'blower' },
                 
                 // 4TH STREET
-                // Left: bench (bottom at street top) + large house (3 tiles apart)
-                { type: 'bench', x: leftZone - 400, y: 1200 - 40, snowAmount: 0, maxSnow: 0 }, // bench height is 40
-                { type: 'bighouse', x: leftZone - 60, y: 1200 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' },
-                // Right: hardware + plow (next to each other, bottoms at street top) + large house (3 tiles away)
-                { type: 'hardware', x: rightZone, y: 1200 - 180, snowAmount: 0, maxSnow: 0 }, // hardware height is 180
-                { type: 'snowplow', x: rightZone + 190, y: 1200 - 140, snowAmount: 0, maxSnow: 0 }, // plow height is 140
-                { type: 'bighouse', x: rightZone + 490, y: 1200 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' },
+                { type: 'bench', x: leftZone - buildingSpacing, y: 840 - 40, snowAmount: 0, maxSnow: 0 },
+                { type: 'bighouse', x: leftZone - 60, y: 840 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' },
+                { type: 'hardware', x: rightZone, y: 840 - 180, snowAmount: 0, maxSnow: 0 },
+                { type: 'snowplow', x: rightZone + 190, y: 840 - 140, snowAmount: 0, maxSnow: 0 },
+                { type: 'bighouse', x: rightZone + 340, y: 840 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' },
                 
                 // 3RD STREET
-                // Left: 1 large house
-                { type: 'bighouse', x: leftZone - 60, y: 1700 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' },
-                // Right: hot dog + bench + campfire (all next to each other, bottoms at street top)
-                { type: 'hotdog', x: rightZone, y: 1700 - 140, snowAmount: 0, maxSnow: 0 }, // hotdog height is 140
-                { type: 'bench', x: rightZone + 150, y: 1700 - 40, snowAmount: 0, maxSnow: 0 }, // bench height is 40
-                { type: 'campfire', x: rightZone + 220, y: 1700 - 60, snowAmount: 0, maxSnow: 0 }, // campfire height is 60
+                { type: 'bighouse', x: leftZone - 60, y: 1190 - 200, snowAmount: 200, maxSnow: 200, payment: 50, requiredTool: 'large' },
+                { type: 'hotdog', x: rightZone, y: 1190 - 140, snowAmount: 0, maxSnow: 0 },
+                { type: 'bench', x: rightZone + 150, y: 1190 - 40, snowAmount: 0, maxSnow: 0 },
+                { type: 'campfire', x: rightZone + 220, y: 1190 - 60, snowAmount: 0, maxSnow: 0 },
                 
-                // 2ND STREET - 4 normal houses (2 left, 2 right, all spaced 3 tiles apart)
-                { type: 'house', x: leftZone - 400, y: 2200 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
-                { type: 'house', x: leftZone, y: 2200 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
-                { type: 'house', x: rightZone, y: 2200 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
-                { type: 'house', x: rightZone + 400, y: 2200 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                // 2ND STREET - 4 normal houses
+                { type: 'house', x: leftZone - buildingSpacing, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                { type: 'house', x: leftZone, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                { type: 'house', x: rightZone, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                { type: 'house', x: rightZone + buildingSpacing, y: 1540 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
                 
                 // 1ST STREET
-                // Left: 2 normal houses (3 tiles apart)
-                { type: 'house', x: leftZone - 400, y: 2700 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
-                { type: 'house', x: leftZone, y: 2700 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
-                // Right: MY HOME + 1 normal house (3 tiles apart)
-                { type: 'home', x: rightZone, y: 2700 - 200, snowAmount: 0, maxSnow: 0 },
-                { type: 'house', x: rightZone + 400, y: 2700 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }
+                { type: 'house', x: leftZone - buildingSpacing, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                { type: 'house', x: leftZone, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' },
+                { type: 'home', x: rightZone, y: 1890 - 200, snowAmount: 0, maxSnow: 0 },
+                { type: 'house', x: rightZone + buildingSpacing, y: 1890 - 180, snowAmount: 100, maxSnow: 100, payment: 20, requiredTool: 'basic' }
             ];
         }
 
@@ -1009,7 +1006,7 @@
         }
 
         function isOnWalkableSurface(x, y) {
-            const mainStreet = 800;
+            const mainStreet = 560;  // Updated
             const streetWidth = 100;
             const streetLeft = mainStreet - streetWidth/2;
             const streetRight = mainStreet + streetWidth/2;
@@ -1020,7 +1017,7 @@
             }
             
             // Check if on any cross street (1st through 6th)
-            const crossStreets = [2700, 2200, 1700, 1200, 700, 200];
+            const crossStreets = [1890, 1540, 1190, 840, 490, 140];  // Updated
             const crossStreetHeight = 100;
             
             for (let streetY of crossStreets) {
@@ -1061,7 +1058,7 @@
             drawGround();
             
             // Draw yellow dotted center line on main street
-            const mainStreet = 800;
+            const mainStreet = 560;  // Updated
             ctx.strokeStyle = '#FFD700';
             ctx.lineWidth = 3;
             ctx.setLineDash([20, 20]);
@@ -1805,8 +1802,8 @@
                 gameState.player.energy = 100;
                 gameState.player.hunger = 100;
                 gameState.player.frost = 0;  // Reset to warm
-                gameState.player.x = 1010;  // In front of home
-                gameState.player.y = 2720; // On 1st street at home's driveway
+                gameState.player.x = 707;   // In front of home (updated)
+                gameState.player.y = 1904;  // On 1st street at home's driveway (updated)
                 animationState.isMoving = false;
                 causeSnowfall();
                 updateMeters();
